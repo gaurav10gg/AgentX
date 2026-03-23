@@ -1,0 +1,13 @@
+{
+  "name": "phone-agent-bot",
+  "version": "1.0.0",
+  "description": "PhoneAgent backend",
+  "scripts": {
+    "start": "node bot/index.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "dotenv": "^16.4.0",
+    "python": "^0.0.4"
+  }
+}

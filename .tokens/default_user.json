@@ -1,0 +1,13 @@
+{
+  "access_token": "ya29.a0ATkoCc5uxSJauB4ovy7sOkNQcxWdVaWfk8UANOoaunb79tpj-88wVjn-hsLLKZoGG8rngjUpoFT2NWRGW0BPMJtnlyU5O9rzthHYVgM3JBN3BVCyT7wyWWxEboaXdjKGlh2DBoA84MvGkSFbKYagZFGPHYajxdBnObpH3YEzWW3lLQ4bspWj9KYo5_MF7b03aRqrewMaCgYKAYQSARYSFQHGX2MiItlqD1djd_J6TQ5HV49Fwg0206",
+  "refresh_token": "1//0gtxu8e-ZdyM8CgYIARAAGBASNgF-L9IrcLRnJv0HAopAWwbHMJVfWaY2U3jhGQ1qJF4xA3Bse_ox01X7Kc066e6L6jmR-Exl1g",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "client_id": "641847355962-qdprl8co66q8tjkk1k3t7lm0tmapsfsv.apps.googleusercontent.com",
+  "client_secret": "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",
+  "scopes": [
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/contacts.readonly"
+  ]
+}
