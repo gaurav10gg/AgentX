@@ -1,0 +1,10 @@
+[
+  {
+    "session_id": "gaurav",
+    "task_id": "b4a2a07c",
+    "description": "Send water reminder email in 3 minutes",
+    "result": "Failed to send email: <HttpError 400 when requesting https://gmail.googleapis.com/gmail/v1/users/me/messages/send?alt=json returned \"Recipient address required\". Details: \"[{'message': 'Recipient address required', 'domain': 'global', 'reason': 'invalidArgument'}]\">",
+    "at": "2026-03-23T13:08:47.151940",
+    "surfaced": false
+  }
+]
