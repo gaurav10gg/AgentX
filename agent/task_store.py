@@ -1,6 +1,11 @@
 # agent/task_store.py
 # Persistent store for scheduled tasks — separate from conversation memory.
 # Tasks survive across messages. Memory does not.
+#
+# SECURITY: google_token is stored in memory only during the scheduler's
+# execution window. It is NEVER written to disk. At save time the token is
+# stripped from the record; at execution time the scheduler fetches a fresh
+# token from token_store (which lives in .tokens/ — gitignored).
 
 import json
 import uuid
@@ -12,6 +17,11 @@ TASK_DIR = Path(".tasks")
 TASK_DIR.mkdir(exist_ok=True)
 
 TASK_FILE = TASK_DIR / "pending_tasks.json"
+
+# In-memory token cache: task_id -> google_token dict.
+# Populated when a task is added, cleared when the task is done/cancelled.
+# Never touches disk.
+_token_cache: dict = {}
 
 
 def _load() -> list:
@@ -25,8 +35,12 @@ def _load() -> list:
 
 
 def _save(tasks: list):
+    # Strip any google_token that may have leaked into a record before writing.
+    # Belt-and-suspenders guard — tokens should never be in the list,
+    # but if a bug causes one to appear we don't want it written to disk.
+    clean = [{k: v for k, v in t.items() if k != "google_token"} for t in tasks]
     with open(TASK_FILE, "w") as f:
-        json.dump(tasks, f, indent=2)
+        json.dump(clean, f, indent=2)
 
 
 def add_task(
@@ -40,16 +54,14 @@ def add_task(
     """
     Save a scheduled task. Returns the task_id.
 
-    Args:
-        session_id:   which user/session created this task
-        tool_name:    which tool to call (e.g. "send_email", "set_alarm")
-        tool_args:    the arguments to pass to that tool
-        execute_at:   when to execute (UTC datetime)
-        description:  human-readable label shown in pending task list
-        google_token: snapshot of the google token at time of scheduling
+    google_token is held in _token_cache (memory only) and never written to disk.
     """
     tasks = _load()
     task_id = str(uuid.uuid4())[:8]
+
+    if google_token:
+        _token_cache[task_id] = google_token
+
     tasks.append({
         "task_id":     task_id,
         "session_id":  session_id,
@@ -57,20 +69,32 @@ def add_task(
         "tool_args":   tool_args,
         "execute_at":  execute_at.isoformat(),
         "description": description,
-        "status":      "pending",      # pending | running | done | failed
+        "status":      "pending",
         "result":      None,
         "created_at":  datetime.utcnow().isoformat(),
-        "google_token": google_token,  # snapshot so token refresh can happen at exec time
+        # google_token intentionally omitted
     })
     _save(tasks)
     return task_id
 
 
+def get_token_for_task(task_id: str) -> Optional[dict]:
+    """
+    Retrieve the in-memory token for a task.
+    Falls back to token_store (refreshed from disk) if not in cache —
+    handles server restarts after the task was saved.
+    """
+    if task_id in _token_cache:
+        return _token_cache[task_id]
+    try:
+        from auth.token_store import refresh_token_if_needed
+        return refresh_token_if_needed("default_user")
+    except Exception:
+        return None
+
+
 def get_pending_tasks(session_id: Optional[str] = None) -> list:
-    """
-    Return all pending tasks, optionally filtered by session_id.
-    Only returns tasks whose execute_at is in the future.
-    """
+    """Return all pending tasks, optionally filtered by session_id."""
     tasks = _load()
     now = datetime.utcnow()
     return [
@@ -84,19 +108,27 @@ def get_pending_tasks(session_id: Optional[str] = None) -> list:
 def get_due_tasks() -> list:
     """
     Return all pending tasks whose execute_at has passed.
-    Called by the scheduler every tick.
+    Also resets tasks stuck in 'running' with no completed_at
+    (crash recovery — prevents permanent stuck tasks on server restart).
     """
     tasks = _load()
     now = datetime.utcnow()
-    return [
-        t for t in tasks
-        if t["status"] == "pending"
-        and datetime.fromisoformat(t["execute_at"]) <= now
-    ]
+    due = []
+    changed = False
+    for t in tasks:
+        if t["status"] == "pending" and datetime.fromisoformat(t["execute_at"]) <= now:
+            due.append(t)
+        elif t["status"] == "running" and not t.get("completed_at"):
+            t["status"] = "pending"
+            changed = True
+            due.append(t)
+    if changed:
+        _save(tasks)
+    return due
 
 
 def mark_task(task_id: str, status: str, result: Optional[str] = None):
-    """Update a task's status and result."""
+    """Update a task's status and result. Clears token cache on completion."""
     tasks = _load()
     for t in tasks:
         if t["task_id"] == task_id:
@@ -105,23 +137,24 @@ def mark_task(task_id: str, status: str, result: Optional[str] = None):
             t["completed_at"] = datetime.utcnow().isoformat()
             break
     _save(tasks)
+    if status in ("done", "failed", "cancelled"):
+        _token_cache.pop(task_id, None)
 
 
 def cancel_task(task_id: str, session_id: str) -> bool:
-    """
-    Cancel a pending task. Returns True if found and cancelled.
-    Only cancels tasks belonging to the given session.
-    """
+    """Cancel a pending task. Returns True if found and cancelled."""
     tasks = _load()
     for t in tasks:
         if t["task_id"] == task_id and t["session_id"] == session_id and t["status"] == "pending":
             t["status"] = "cancelled"
             _save(tasks)
+            _token_cache.pop(task_id, None)
             return True
     return False
 
+
 def cleanup_old_notifications(days: int = 7):
-    """Remove notifications older than N days regardless of surfaced status."""
+    """Remove notifications older than N days."""
     from datetime import timedelta
     notifications_file = TASK_DIR / "notifications.json"
     if not notifications_file.exists():
@@ -133,36 +166,39 @@ def cleanup_old_notifications(days: int = 7):
     with open(notifications_file, "w") as f:
         json.dump(fresh, f, indent=2)
 
+
 def format_pending_for_prompt(session_id: str) -> Optional[str]:
     """
-    Returns a short string describing pending tasks for injection into the system prompt.
-    Returns None if there are no pending tasks for this session.
-
-    Example output:
-        PENDING TASKS (do not re-schedule these):
-        - [a1b2c3d4] Send email to dr.sharma@nitpy.ac.in at 14:32 IST (in 4 min)
-        - [e5f6g7h8] Alarm: Wake up at 07:00 IST (in 6 hr 12 min)
+    Returns pending tasks for injection into the system prompt.
+    Includes tasks due within the next 60s (labelled 'executing soon')
+    so the LLM doesn't re-schedule them during the scheduler's tick window.
     """
-    pending = get_pending_tasks(session_id)
-    if not pending:
-        return None
-
+    tasks = _load()
     now = datetime.utcnow()
-    lines = ["PENDING TASKS (do not re-schedule these, they are already queued):"]
-    for t in pending:
-        execute_at = datetime.fromisoformat(t["execute_at"])
-        delta = execute_at - now
-        total_seconds = int(delta.total_seconds())
+    lines = []
 
-        if total_seconds < 60:
-            time_str = f"in {total_seconds}s"
-        elif total_seconds < 3600:
-            time_str = f"in {total_seconds // 60} min"
+    for t in tasks:
+        if t["status"] != "pending":
+            continue
+        if session_id and t["session_id"] != session_id:
+            continue
+
+        execute_at = datetime.fromisoformat(t["execute_at"])
+        total_s = int((execute_at - now).total_seconds())
+
+        if total_s < 0:
+            time_str = "executing now"
+        elif total_s < 60:
+            time_str = "executing soon"
+        elif total_s < 3600:
+            time_str = f"in {total_s // 60} min"
         else:
-            h = total_seconds // 3600
-            m = (total_seconds % 3600) // 60
+            h, m = total_s // 3600, (total_s % 3600) // 60
             time_str = f"in {h}h {m}min"
 
         lines.append(f"  - [{t['task_id']}] {t['description']} ({time_str})")
 
-    return "\n".join(lines)
+    if not lines:
+        return None
+
+    return "PENDING TASKS (do not re-schedule these, they are already queued):\n" + "\n".join(lines)

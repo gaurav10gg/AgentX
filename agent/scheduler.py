@@ -1,56 +1,35 @@
 # agent/scheduler.py
 # Background asyncio loop — runs independently of user messages.
 # Wakes every TICK_SECONDS, finds due tasks, executes them, stores results.
-# Results are surfaced to the user on their next message via task_store.
+
 from agent.task_store import cleanup_old_notifications
 import asyncio
 import logging
 from datetime import datetime
 from typing import Callable, Optional
 
-from agent.task_store import get_due_tasks, mark_task
+from agent.task_store import get_due_tasks, mark_task, get_token_for_task
 from agent.toolRouter import execute_tool
 
 logger = logging.getLogger("scheduler")
 
-TICK_SECONDS = 30  # how often to check for due tasks
+TICK_SECONDS = 10  # reduced from 30 — 10s is imperceptible to users
 
 
 class TaskScheduler:
-    """
-    Singleton background scheduler.
-    Start it once at server startup via scheduler.start().
-
-    On each tick it:
-      1. Loads all tasks where execute_at <= now and status == pending
-      2. Marks each as "running" to prevent double-execution
-      3. Calls execute_tool() with the stored args
-      4. Marks the task as done/failed and stores the result
-      5. Calls the optional notify_callback so the app can push a notification
-    """
-
     def __init__(self):
         self._task: Optional[asyncio.Task] = None
         self._notify_callback: Optional[Callable] = None
 
     def set_notify_callback(self, callback: Callable):
-        """
-        Register a callback that will be called when a task completes.
-        Signature: async def callback(session_id: str, task_id: str, description: str, result: str)
-
-        Use this to push a notification to the user (Telegram, FCM, websocket, etc.)
-        In Phase 1 (no push yet): the result is stored and surfaced on the next message.
-        """
         self._notify_callback = callback
 
     def start(self):
-        """Call this once at FastAPI startup."""
         if self._task is None or self._task.done():
             self._task = asyncio.create_task(self._loop())
             logger.info("Scheduler started — tick every %ds", TICK_SECONDS)
 
     def stop(self):
-        """Call this at FastAPI shutdown."""
         if self._task and not self._task.done():
             self._task.cancel()
             logger.info("Scheduler stopped")
@@ -62,7 +41,6 @@ class TaskScheduler:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                # Never let a crash kill the scheduler
                 logger.error("Scheduler tick error: %s", e, exc_info=True)
             await asyncio.sleep(TICK_SECONDS)
 
@@ -75,28 +53,18 @@ class TaskScheduler:
         logger.info("Scheduler: %d task(s) due", len(due))
 
         for task in due:
-            task_id    = task["task_id"]
-            session_id = task["session_id"]
-            tool_name  = task["tool_name"]
-            tool_args  = task["tool_args"]
+            task_id     = task["task_id"]
+            session_id  = task["session_id"]
+            tool_name   = task["tool_name"]
+            tool_args   = task["tool_args"]
             description = task["description"]
-            google_token = task.get("google_token")
 
-            # Mark running immediately to prevent double execution on next tick
             mark_task(task_id, "running")
-
             logger.info("Executing task [%s]: %s(%s)", task_id, tool_name, tool_args)
 
             try:
-                # Refresh google token if needed before executing
-                if google_token:
-                    try:
-                        from auth.token_store import refresh_token_if_needed
-                        refreshed = refresh_token_if_needed(session_id)
-                        if refreshed:
-                            google_token = refreshed
-                    except Exception:
-                        pass  # use the snapshot token if refresh fails
+                # Fetch token from memory cache or token_store — never from the task record
+                google_token = get_token_for_task(task_id)
 
                 result = await execute_tool(tool_name, tool_args, google_token)
                 mark_task(task_id, "done", result)
@@ -120,5 +88,4 @@ class TaskScheduler:
                         pass
 
 
-# Singleton — import this everywhere
 scheduler = TaskScheduler()

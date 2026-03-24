@@ -1,2 +1,22 @@
+# Dependencies
 node_modules/
+
+# Environment — API keys, secrets
 .env
+
+# Google OAuth tokens — NEVER commit these, they are live credentials
+.tokens/
+
+# Scheduled task store — contains token snapshots (live credentials)
+.tasks/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
