@@ -131,6 +131,10 @@ async def chat(req: ChatRequest):
     except Exception:
         pass
 
+    # Recovery path: if callback-based notifications were missed, reconstruct them
+    # from completed tasks so user can still see task outcomes in chat.
+    _backfill_notifications_from_tasks(req.session_id)
+
     # Pull any completed task notifications for this session before running agent
     notifications = _pop_notifications(req.session_id)
 
@@ -155,6 +159,14 @@ async def chat(req: ChatRequest):
             base_url=req.base_url,
             google_token=google_token,
         )
+
+        # Deterministic UX: always surface completed task notifications in reply text.
+        # This avoids cases where the LLM ignores completion lines and switches topics.
+        if notifications:
+            summary = _format_notifications_summary(notifications)
+            reply = result.get("reply", "")
+            result["reply"] = f"{summary}\n\n{reply}" if reply else summary
+
         return ChatResponse(
             **result,
             task_notifications=notifications,
@@ -215,6 +227,66 @@ def _pop_notifications(session_id: str) -> list:
         return mine
     except Exception:
         return []
+
+
+def _backfill_notifications_from_tasks(session_id: str):
+    from agent.task_store import TASK_DIR
+    import json
+    from datetime import datetime
+
+    task_file = TASK_DIR / "pending_tasks.json"
+    notifications_file = TASK_DIR / "notifications.json"
+
+    if not task_file.exists():
+        return
+
+    try:
+        with open(task_file) as f:
+            tasks = json.load(f)
+    except Exception:
+        return
+
+    try:
+        if notifications_file.exists():
+            with open(notifications_file) as f:
+                notifs = json.load(f)
+        else:
+            notifs = []
+    except Exception:
+        notifs = []
+
+    existing_task_ids = {n.get("task_id") for n in notifs}
+    changed = False
+
+    for t in tasks:
+        if t.get("session_id") != session_id:
+            continue
+        if t.get("status") not in ("done", "failed"):
+            continue
+        task_id = t.get("task_id")
+        if task_id in existing_task_ids:
+            continue
+
+        notifs.append({
+            "session_id": session_id,
+            "task_id": task_id,
+            "description": t.get("description", "Scheduled task"),
+            "result": t.get("result", ""),
+            "at": t.get("completed_at") or datetime.utcnow().isoformat(),
+            "surfaced": False,
+        })
+        changed = True
+
+    if changed:
+        with open(notifications_file, "w") as f:
+            json.dump(notifs, f, indent=2)
+
+
+def _format_notifications_summary(notifications: list) -> str:
+    lines = ["Completed tasks:"]
+    for n in notifications:
+        lines.append(f"- {n['description']}: {n['result']}")
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":
