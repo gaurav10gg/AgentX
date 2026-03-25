@@ -7,7 +7,11 @@ TOKEN_DIR = Path(".tokens")
 TOKEN_DIR.mkdir(exist_ok=True)
 
 def _path(user_id: str) -> Path:
-    return TOKEN_DIR / f"{user_id}.json"
+    # Sanitize to prevent path traversal
+    safe_id = "".join(c for c in user_id if c.isalnum() or c in "-_")
+    if not safe_id:
+        raise ValueError(f"Invalid user_id: {user_id!r}")
+    return TOKEN_DIR / f"{safe_id}.json"
 
 def save_token(user_id: str, token_data: dict):
     with open(_path(user_id), "w") as f:
@@ -46,5 +50,4 @@ def refresh_token_if_needed(user_id: str) -> Optional[dict]:
             save_token(user_id, token)
         return token
     except Exception:
-        # Token refresh failed — user needs to re-login
         return token

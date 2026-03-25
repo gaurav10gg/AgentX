@@ -33,8 +33,9 @@ app.include_router(auth_router)
 
 # ── Scheduler lifecycle ──────────────────────────────────────────────────────
 
-@app.on_event("startup")
 async def startup():
+    from auth.google_oauth import start_cleanup_task
+    start_cleanup_task()                    # ← add this
     scheduler.set_notify_callback(_on_task_complete)
     scheduler.start()
 
