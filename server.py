@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import Optional
 import uvicorn
 import traceback
+import re
 
 from agent.agent import run_agent
 from agent.scheduler import scheduler
@@ -68,8 +69,8 @@ async def _on_task_complete(session_id: str, task_id: str, description: str, res
         notifs.append({
             "session_id":  session_id,
             "task_id":     task_id,
-            "description": description,
-            "result":      result,
+            "description": _fix_mojibake_text(description),
+            "result":      _fix_mojibake_text(result),
             "at":          datetime.utcnow().isoformat(),
             "surfaced":    False,
         })
@@ -159,6 +160,8 @@ async def chat(req: ChatRequest):
             base_url=req.base_url,
             google_token=google_token,
         )
+        result = _sanitize_payload_text(result)
+        notifications = _sanitize_payload_text(notifications)
 
         # Deterministic UX: always surface completed task notifications in reply text.
         # This avoids cases where the LLM ignores completion lines and switches topics.
@@ -287,6 +290,52 @@ def _format_notifications_summary(notifications: list) -> str:
     for n in notifications:
         lines.append(f"- {n['description']}: {n['result']}")
     return "\n".join(lines)
+
+
+def _sanitize_payload_text(value):
+    if isinstance(value, str):
+        return _fix_mojibake_text(value)
+    if isinstance(value, list):
+        return [_sanitize_payload_text(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _sanitize_payload_text(v) for k, v in value.items()}
+    return value
+
+
+def _fix_mojibake_text(text: str) -> str:
+    if not isinstance(text, str) or not text:
+        return text
+
+    cleaned = text
+    looks_mojibake = any(marker in cleaned for marker in ("Ã", "â", "Â", "ð"))
+    if looks_mojibake:
+        try:
+            repaired = cleaned.encode("latin-1").decode("utf-8")
+            if repaired and repaired.count("�") <= cleaned.count("�"):
+                cleaned = repaired
+        except Exception:
+            pass
+
+    replacements = {
+        "â€™": "’",
+        "â€˜": "‘",
+        "â€œ": "“",
+        "â€": "”",
+        "â€“": "–",
+        "â€”": "—",
+        "â€¦": "…",
+        "â€¢": "•",
+        "â†’": "->",
+        "â€¯": " ",
+        "Â ": " ",
+        "Â": "",
+    }
+    for bad, good in replacements.items():
+        cleaned = cleaned.replace(bad, good)
+
+    # Collapse accidental runs of odd spacing after replacement.
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
+    return cleaned
 
 
 if __name__ == "__main__":
