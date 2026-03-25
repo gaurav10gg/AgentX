@@ -45,7 +45,10 @@ class TaskScheduler:
             await asyncio.sleep(TICK_SECONDS)
 
     async def _tick(self):
-        cleanup_old_notifications()
+        try:
+            cleanup_old_notifications()
+        except Exception as e:
+            logger.warning("Notification cleanup failed: %s", e)
         due = get_due_tasks()
         if not due:
             return

@@ -1,9 +1,9 @@
-# agent/agent.py
-# ReAct loop — Reason, Act, Observe, Repeat
+﻿# agent/agent.py
+# ReAct loop â€” Reason, Act, Observe, Repeat
 #
 # Changes from original:
 #   1. Injects pending tasks into the system prompt so the LLM knows what's queued
-#   2. Handles "schedule_task" tool calls — saves future tasks to task_store
+#   2. Handles "schedule_task" tool calls â€” saves future tasks to task_store
 #   3. Handles "cancel_task" tool calls
 #   4. Handles "list_tasks" tool calls
 #   5. [FIX] _handle_schedule_task now structurally validates args before saving,
@@ -27,7 +27,7 @@ from config.settings import settings
 # ---------------------------------------------------------------------------
 # Per-tool required fields and validation rules.
 # Any tool scheduled via schedule_task is checked against this table before
-# being saved. This is the structural enforcement layer — the LLM's instruction
+# being saved. This is the structural enforcement layer â€” the LLM's instruction
 # following is unreliable, so we validate here unconditionally.
 # ---------------------------------------------------------------------------
 SCHEDULED_TOOL_RULES: Dict[str, Dict] = {
@@ -38,7 +38,7 @@ SCHEDULED_TOOL_RULES: Dict[str, Dict] = {
     },
     "send_email": {
         "required": ["to", "subject", "body"],
-        # "to" must be a non-empty string — the most common LLM mistake
+        # "to" must be a non-empty string â€” the most common LLM mistake
         "non_empty": ["to", "subject"],
     },
     "create_event": {
@@ -59,14 +59,12 @@ SCHEDULABLE_TOOLS = {t["function"]["name"] for t in TOOL_DEFINITIONS}
 
 
 # ---------------------------------------------------------------------------
-# Reminder-intent keywords — if the user message looks like a reminder and
+# Reminder-intent keywords â€” if the user message looks like a reminder and
 # the LLM tries to schedule send_email, we catch it here and correct it.
 # This is a last-resort guard; the system prompt is the first line of defense.
 # ---------------------------------------------------------------------------
-REMINDER_KEYWORDS = {
-    "remind", "reminder", "alert", "notify", "notification",
-    "wake", "alarm", "ping", "buzz", "ding",
-}
+
+IST_OFFSET = timedelta(hours=5, minutes=30)
 
 
 def _looks_like_reminder(description: str) -> bool:
@@ -75,7 +73,7 @@ def _looks_like_reminder(description: str) -> bool:
     return bool(REMINDER_KEYWORDS & set(words))
 
 
-SYSTEM_PROMPT = """You are AgentX — a personal AI assistant that controls a user's Android phone.
+SYSTEM_PROMPT = """You are AgentX â€” a personal AI assistant that controls a user's Android phone.
 
 You can:
 - Send, read, search Gmail emails
@@ -90,24 +88,24 @@ You can:
 Current date/time (UTC): {datetime}
 User timezone: IST (UTC+5:30). When the user says "9 PM" or "tomorrow morning",
 convert to UTC by subtracting 5 hours 30 minutes before passing to execute_at_utc.
-Example: user says "9 PM IST" → execute_at_utc = today's date + "15:30:00" (UTC).
+Example: user says "9 PM IST" â†’ execute_at_utc = today's date + "15:30:00" (UTC).
 
 {pending_tasks_block}
 
-RULES — read every rule before deciding which tool to call:
+RULES â€” read every rule before deciding which tool to call:
 
-1. FUTURE vs NOW — most important rule:
-   - "in X minutes/hours", "after X", "remind me in X" → schedule_task with delay_seconds
-   - "at 9pm", "tomorrow morning", "on Friday"         → schedule_task with execute_at_utc (converted to UTC)
-   - "now", "immediately", no delay mentioned           → call the tool directly
+1. FUTURE vs NOW â€” most important rule:
+   - "in X minutes/hours", "after X", "remind me in X" â†’ schedule_task with delay_seconds
+   - "at 9pm", "tomorrow morning", "on Friday"         â†’ schedule_task with execute_at_utc (converted to UTC)
+   - "now", "immediately", no delay mentioned           â†’ call the tool directly
 
-2. REMINDERS ARE ALWAYS ALARMS — never emails.
-   "Remind me to X", "alert me", "ping me", "wake me up" → schedule_task with tool_name="set_alarm".
+2. REMINDERS ARE ALWAYS ALARMS â€” never emails.
+   "Remind me to X", "alert me", "ping me", "wake me up" â†’ schedule_task with tool_name="set_alarm".
    NEVER use send_email for a reminder. send_email is ONLY for explicitly sending a message to another person.
    If you find yourself writing tool_name="send_email" for a reminder, STOP and use tool_name="set_alarm" instead.
 
 3. set_alarm args must be integers: {{ "hour": <int 0-23>, "minute": <int 0-59>, "label": "<string>" }}.
-   Do NOT pass strings like "21" — pass the integer 21.
+   Do NOT pass strings like "21" â€” pass the integer 21.
 
 4. schedule_task "description" field is REQUIRED and must be human-readable.
    Good: "Drink water reminder"   Bad: "send_email" or "set_alarm"
@@ -120,7 +118,7 @@ RULES — read every rule before deciding which tool to call:
 
 7. Never re-schedule a task already listed in PENDING TASKS above.
 
-8. Be concise — this is a chat interface. Confirm what you did in plain language.
+8. Be concise â€” this is a chat interface. Confirm what you did in plain language.
 
 9. Reply in the same language the user used (Hindi, Tamil, English, etc.)
 
@@ -136,7 +134,7 @@ SCHEDULE_TOOL = {
             "Schedule any tool to run in the future. "
             "Use whenever the user says 'in X minutes/hours', 'remind me', "
             "'after X', or 'do this later'. "
-            "IMPORTANT: for reminders/alerts, always set tool_name='set_alarm' — "
+            "IMPORTANT: for reminders/alerts, always set tool_name='set_alarm' â€” "
             "NEVER tool_name='send_email' for a reminder. "
             "Do NOT call the underlying tool directly for future tasks."
         ),
@@ -155,7 +153,7 @@ SCHEDULE_TOOL = {
                 "tool_args": {
                     "type": "object",
                     "description": (
-                        "Arguments for the target tool ONLY — no 'description' here. "
+                        "Arguments for the target tool ONLY â€” no 'description' here. "
                         "set_alarm:   {\"hour\": <int>, \"minute\": <int>, \"label\": <str>}. "
                         "send_email:  {\"to\": <non-empty email>, \"subject\": <str>, \"body\": <str>}. "
                         "create_event:{\"title\": <str>, \"date\": <YYYY-MM-DD>, \"time\": <HH:MM>}."
@@ -278,13 +276,13 @@ async def run_agent(
             tool_name = tool_call.function.name
             tool_args = json.loads(tool_call.function.arguments)
 
-            # ── schedule_task ──────────────────────────────────────────────
+            # â”€â”€ schedule_task â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if tool_name == "schedule_task":
                 tool_result = _handle_schedule_task(
                     tool_args, session_id, user_id, google_token, now_utc
                 )
 
-            # ── cancel_task ────────────────────────────────────────────────
+            # â”€â”€ cancel_task â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             elif tool_name == "cancel_task":
                 cancelled = cancel_task(tool_args["task_id"], session_id)
                 tool_result = (
@@ -293,7 +291,7 @@ async def run_agent(
                     else f"Task [{tool_args['task_id']}] not found or already completed."
                 )
 
-            # ── list_tasks ─────────────────────────────────────────────────
+            # â”€â”€ list_tasks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             elif tool_name == "list_tasks":
                 pending = get_pending_tasks(session_id)
                 if not pending:
@@ -302,15 +300,15 @@ async def run_agent(
                     lines = [f"  [{t['task_id']}] {t['description']}" for t in pending]
                     tool_result = "Pending tasks:\n" + "\n".join(lines)
 
-            # ── set_alarm (immediate) ──────────────────────────────────────
+            # â”€â”€ set_alarm (immediate) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             elif tool_name == "set_alarm":
                 alarm_data = tool_args
                 tool_result = (
                     f"Alarm set for {tool_args['hour']:02d}:{tool_args['minute']:02d}"
-                    + (f" — {tool_args.get('label', '')}" if tool_args.get("label") else "")
+                    + (f" â€” {tool_args.get('label', '')}" if tool_args.get("label") else "")
                 )
 
-            # ── all other tools ────────────────────────────────────────────
+            # â”€â”€ all other tools â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             else:
                 tool_result = await _safe_execute(tool_name, tool_args, google_token)
 
@@ -336,7 +334,7 @@ async def run_agent(
 
 
 # ---------------------------------------------------------------------------
-# Scheduling validation — the structural enforcement layer.
+# Scheduling validation â€” the structural enforcement layer.
 # The LLM is asked nicely in the system prompt. This function enforces it hard.
 # ---------------------------------------------------------------------------
 
@@ -348,7 +346,7 @@ def _validate_scheduled_tool(tool_name: str, tool_args: dict, description: str) 
 
     Checks performed:
       1. tool_name must be a known, schedulable tool.
-      2. Reminder-intent + send_email mismatch → redirect to set_alarm.
+      2. Reminder-intent + send_email mismatch â†’ redirect to set_alarm.
       3. Per-tool required fields must be present.
       4. Per-tool non-empty string fields must not be blank.
       5. Per-tool integer fields must be actual ints within valid ranges.
@@ -361,7 +359,7 @@ def _validate_scheduled_tool(tool_name: str, tool_args: dict, description: str) 
             f"Valid options: {', '.join(sorted(SCHEDULABLE_TOOLS))}."
         )
 
-    # 2. Reminder-intent guard — catch the exact bug that caused the water reminder failure.
+    # 2. Reminder-intent guard â€” catch the exact bug that caused the water reminder failure.
     #    If the description sounds like a reminder but the tool is send_email, reject it
     #    with a clear corrective message so the LLM retries with set_alarm.
     if tool_name == "send_email" and _looks_like_reminder(description):
@@ -374,7 +372,7 @@ def _validate_scheduled_tool(tool_name: str, tool_args: dict, description: str) 
     # 3 & 4 & 5. Per-tool field rules
     rules = SCHEDULED_TOOL_RULES.get(tool_name)
     if rules is None:
-        return None  # No extra rules for this tool — allow it
+        return None  # No extra rules for this tool â€” allow it
 
     # 3. Required fields must be present (key exists)
     for field in rules.get("required", []):
@@ -404,7 +402,7 @@ def _validate_scheduled_tool(tool_name: str, tool_args: dict, description: str) 
         if value is None:
             continue  # already caught by required check above
         if not isinstance(value, expected_type):
-            # Try to coerce — LLMs sometimes pass "21" instead of 21
+            # Try to coerce â€” LLMs sometimes pass "21" instead of 21
             try:
                 coerced = expected_type(value)
                 tool_args[field] = coerced  # mutate in place so save uses the clean value
@@ -434,41 +432,44 @@ def _handle_schedule_task(
     now_utc: datetime,
 ) -> str:
     """Parse schedule_task args, validate, save to task_store, return confirmation string."""
-    tool_name   = args.get("tool_name", "")
-    tool_args   = args.get("tool_args", {})
+    tool_name = args.get("tool_name", "")
+    tool_args = args.get("tool_args", {})
     description = args.get("description", "").strip() or tool_name
 
-    # ── Reject a blank description ─────────────────────────────────────────
     if not args.get("description", "").strip():
         return (
             "Error: 'description' is required and must be a human-readable label. "
             "Example: 'Drink water reminder'. Retry with a non-empty description."
         )
 
-    # ── Structural validation (tool name + args) ───────────────────────────
-    validation_error = _validate_scheduled_tool(tool_name, tool_args, description)
-    if validation_error:
-        return validation_error
+    if not isinstance(tool_args, dict):
+        return "Error: 'tool_args' must be an object."
 
-    # ── Resolve execute_at ─────────────────────────────────────────────────
-    if args.get("delay_seconds") is not None and args.get("execute_at_utc") is not None:
+    # Providers occasionally place scheduling keys inside tool_args.
+    delay_seconds = args.get("delay_seconds")
+    execute_at_utc = args.get("execute_at_utc")
+    if delay_seconds is None and tool_args.get("delay_seconds") is not None:
+        delay_seconds = tool_args.pop("delay_seconds")
+    if execute_at_utc is None and tool_args.get("execute_at_utc"):
+        execute_at_utc = tool_args.pop("execute_at_utc")
+
+    if delay_seconds is not None and execute_at_utc is not None:
         return "Error: provide either delay_seconds OR execute_at_utc, not both."
 
-    if args.get("delay_seconds") is not None:
+    if delay_seconds is not None:
         try:
-            delay = int(args["delay_seconds"])
+            delay = int(delay_seconds)
         except (ValueError, TypeError):
-            return f"Error: delay_seconds must be an integer, got {args['delay_seconds']!r}."
+            return f"Error: delay_seconds must be an integer, got {delay_seconds!r}."
         if delay <= 0:
             return "Error: delay_seconds must be greater than 0."
         execute_at = now_utc + timedelta(seconds=delay)
-
-    elif args.get("execute_at_utc"):
+    elif execute_at_utc:
         try:
-            execute_at = datetime.fromisoformat(args["execute_at_utc"])
+            execute_at = datetime.fromisoformat(execute_at_utc)
         except ValueError:
             return (
-                f"Error: invalid execute_at_utc format '{args['execute_at_utc']}'. "
+                f"Error: invalid execute_at_utc format '{execute_at_utc}'. "
                 "Use YYYY-MM-DDTHH:MM:SS in UTC. "
                 "Remember: IST is UTC+5:30, so subtract 5h30m from the IST time."
             )
@@ -478,10 +479,22 @@ def _handle_schedule_task(
     if execute_at <= now_utc:
         return (
             f"Error: scheduled time ({execute_at.isoformat()}) is in the past. "
-            "Check timezone — if you specified IST, subtract 5h30m to get UTC."
+            "Check timezone. If you specified IST, subtract 5h30m to get UTC."
         )
 
-    # ── Save ───────────────────────────────────────────────────────────────
+    # For relative reminder schedules, auto-fill missing set_alarm time fields.
+    if tool_name == "set_alarm":
+        if tool_args.get("hour") is None or tool_args.get("minute") is None:
+            ist_dt = execute_at + IST_OFFSET
+            tool_args["hour"] = ist_dt.hour
+            tool_args["minute"] = ist_dt.minute
+        if not tool_args.get("label"):
+            tool_args["label"] = description or "Reminder"
+
+    validation_error = _validate_scheduled_tool(tool_name, tool_args, description)
+    if validation_error:
+        return validation_error
+
     task_id = add_task(
         session_id=session_id,
         user_id=user_id,
@@ -492,7 +505,6 @@ def _handle_schedule_task(
         google_token=google_token,
     )
 
-    # Human-readable confirmation
     delta = execute_at - now_utc
     total_s = int(delta.total_seconds())
     if total_s < 60:
@@ -503,8 +515,7 @@ def _handle_schedule_task(
         h, m = total_s // 3600, (total_s % 3600) // 60
         when = f"in {h}h {m}min"
 
-    return f"Task [{task_id}] scheduled: '{description}' — will run {when}."
-
+    return f"Task [{task_id}] scheduled: '{description}' - will run {when}."
 
 async def _safe_execute(tool_name: str, tool_args: dict, google_token) -> str:
     """Wrap execute_tool with a structured error so the LLM gets clean feedback."""
@@ -512,3 +523,4 @@ async def _safe_execute(tool_name: str, tool_args: dict, google_token) -> str:
         return await execute_tool(tool_name, tool_args, google_token)
     except Exception as e:
         return f"Tool '{tool_name}' encountered an error: {str(e)}"
+

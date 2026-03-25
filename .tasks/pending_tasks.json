@@ -13,19 +13,40 @@
     "status": "done",
     "result": "Failed to send email: <HttpError 400 when requesting https://gmail.googleapis.com/gmail/v1/users/me/messages/send?alt=json returned \"Recipient address required\". Details: \"[{'message': 'Recipient address required', 'domain': 'global', 'reason': 'invalidArgument'}]\">",
     "created_at": "2026-03-23T13:05:38.675890",
-    "google_token": {
-      "access_token": "ya29.a0ATkoCc5uxSJauB4ovy7sOkNQcxWdVaWfk8UANOoaunb79tpj-88wVjn-hsLLKZoGG8rngjUpoFT2NWRGW0BPMJtnlyU5O9rzthHYVgM3JBN3BVCyT7wyWWxEboaXdjKGlh2DBoA84MvGkSFbKYagZFGPHYajxdBnObpH3YEzWW3lLQ4bspWj9KYo5_MF7b03aRqrewMaCgYKAYQSARYSFQHGX2MiItlqD1djd_J6TQ5HV49Fwg0206",
-      "refresh_token": "1//0gtxu8e-ZdyM8CgYIARAAGBASNgF-L9IrcLRnJv0HAopAWwbHMJVfWaY2U3jhGQ1qJF4xA3Bse_ox01X7Kc066e6L6jmR-Exl1g",
-      "token_uri": "https://oauth2.googleapis.com/token",
-      "client_id": "641847355962-qdprl8co66q8tjkk1k3t7lm0tmapsfsv.apps.googleusercontent.com",
-      "client_secret": "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",
-      "scopes": [
-        "https://www.googleapis.com/auth/gmail.readonly",
-        "https://www.googleapis.com/auth/gmail.send",
-        "https://www.googleapis.com/auth/calendar",
-        "https://www.googleapis.com/auth/contacts.readonly"
-      ]
-    },
     "completed_at": "2026-03-23T13:08:47.150385"
+  },
+  {
+    "task_id": "d7dd86d2",
+    "session_id": "talk_debug_2",
+    "user_id": "default_user",
+    "tool_name": "set_alarm",
+    "tool_args": {
+      "hour": 0,
+      "minute": 0,
+      "label": "Drink water reminder"
+    },
+    "execute_at": "2026-03-25T13:14:55.626255",
+    "description": "Drink water reminder",
+    "status": "done",
+    "result": "Alarm set for 12:00 AM | label: Drink water reminder",
+    "created_at": "2026-03-25T13:13:57.617560",
+    "completed_at": "2026-03-25T13:27:55.586992"
+  },
+  {
+    "task_id": "9c600095",
+    "session_id": "talk_debug_3",
+    "user_id": "default_user",
+    "tool_name": "set_alarm",
+    "tool_args": {
+      "hour": 13,
+      "minute": 24,
+      "label": "Drink water reminder"
+    },
+    "execute_at": "2026-03-25T13:24:11.524163",
+    "description": "Drink water reminder",
+    "status": "done",
+    "result": "Alarm set for 1:24 PM | label: Drink water reminder",
+    "created_at": "2026-03-25T13:23:15.761984",
+    "completed_at": "2026-03-25T13:27:55.632369"
   }
 ]

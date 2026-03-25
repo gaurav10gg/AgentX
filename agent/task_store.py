@@ -97,6 +97,7 @@ def _save(tasks: list):
 
 def add_task(
     session_id: str,
+    user_id: str,
     tool_name: str,
     tool_args: dict,
     execute_at: datetime,
@@ -112,6 +113,7 @@ def add_task(
     tasks.append({
         "task_id":    task_id,
         "session_id": session_id,
+        "user_id": user_id,
         "tool_name":  tool_name,
         "tool_args":  tool_args,
         "execute_at": execute_at.isoformat(),
@@ -124,14 +126,21 @@ def add_task(
     return task_id
 
 
-def get_token_for_task(task_id: str) -> Optional[dict]:
+def get_token_for_task(task_or_id) -> Optional[dict]:
+    if isinstance(task_or_id, dict):
+        task_id = task_or_id.get("task_id")
+        user_id = task_or_id.get("user_id", "default_user")
+    else:
+        task_id = task_or_id
+        user_id = "default_user"
+
     token = _load_token(task_id)
     if token:
         return token
     # Fallback: refresh from disk token store (handles pre-migration tasks)
     try:
         from auth.token_store import refresh_token_if_needed
-        return refresh_token_if_needed("default_user")
+        return refresh_token_if_needed(user_id)
     except Exception:
         return None
 
@@ -193,8 +202,12 @@ def cleanup_old_notifications(days: int = 7):
     if not notifications_file.exists():
         return
     cutoff = datetime.utcnow() - timedelta(days=days)
-    with open(notifications_file) as f:
-        all_notifs = json.load(f)
+    try:
+        with open(notifications_file) as f:
+            all_notifs = json.load(f)
+    except Exception:
+        # Corrupt/partial notification file should not block scheduler.
+        return
     fresh = [n for n in all_notifs if datetime.fromisoformat(n["at"]) > cutoff]
     with open(notifications_file, "w") as f:
         json.dump(fresh, f, indent=2)

@@ -124,6 +124,13 @@ async def chat(req: ChatRequest):
 
     google_token = refresh_token_if_needed(req.user_id)
 
+    # Fallback execution path: run one scheduler tick on each chat request.
+    # This ensures due tasks are not stuck if background scheduling is paused.
+    try:
+        await scheduler._tick()
+    except Exception:
+        pass
+
     # Pull any completed task notifications for this session before running agent
     notifications = _pop_notifications(req.session_id)
 
