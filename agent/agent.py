@@ -221,6 +221,7 @@ ALL_TOOLS = TOOL_DEFINITIONS + [SCHEDULE_TOOL, CANCEL_TOOL, LIST_TASKS_TOOL]
 async def run_agent(
     user_message: str,
     session_id: str,
+    user_id: str,
     provider: str,
     api_key: str,
     model: Optional[str] = None,
@@ -280,7 +281,7 @@ async def run_agent(
             # ── schedule_task ──────────────────────────────────────────────
             if tool_name == "schedule_task":
                 tool_result = _handle_schedule_task(
-                    tool_args, session_id, google_token, now_utc
+                    tool_args, session_id, user_id, google_token, now_utc
                 )
 
             # ── cancel_task ────────────────────────────────────────────────
@@ -428,6 +429,7 @@ def _validate_scheduled_tool(tool_name: str, tool_args: dict, description: str) 
 def _handle_schedule_task(
     args: dict,
     session_id: str,
+    user_id: str,
     google_token: Optional[dict],
     now_utc: datetime,
 ) -> str:
@@ -482,6 +484,7 @@ def _handle_schedule_task(
     # ── Save ───────────────────────────────────────────────────────────────
     task_id = add_task(
         session_id=session_id,
+        user_id=user_id,
         tool_name=tool_name,
         tool_args=tool_args,
         execute_at=execute_at,

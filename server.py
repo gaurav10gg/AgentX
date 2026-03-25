@@ -1,5 +1,5 @@
 # server.py
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
@@ -104,9 +104,9 @@ class ChatResponse(BaseModel):
 # ── Routes ───────────────────────────────────────────────────────────────────
 
 @app.get("/")
-async def health():
+async def health(user_id: str = Query("default_user")):
     from auth.token_store import get_token
-    token = get_token("default_user")
+    token = get_token(user_id)
     return {
         "status": "running",
         "version": "1.0.0",
@@ -140,6 +140,7 @@ async def chat(req: ChatRequest):
         result = await run_agent(
             user_message=effective_message,
             session_id=req.session_id,
+            user_id=req.user_id,
             provider=req.provider,
             api_key=req.api_key,
             model=req.model,

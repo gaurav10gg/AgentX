@@ -64,7 +64,7 @@ class TaskScheduler:
 
             try:
                 # Fetch token from memory cache or token_store — never from the task record
-                google_token = get_token_for_task(task_id)
+                google_token = get_token_for_task(task)
 
                 result = await execute_tool(tool_name, tool_args, google_token)
                 mark_task(task_id, "done", result)

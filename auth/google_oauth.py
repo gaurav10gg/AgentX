@@ -1,6 +1,6 @@
 # auth/google_oauth.py
 import httpx
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import RedirectResponse, JSONResponse
 from config.settings import settings
 from auth.token_store import save_token, get_token, delete_token
@@ -15,13 +15,13 @@ SCOPES = " ".join([
     "https://www.googleapis.com/auth/contacts.readonly",
 ])
 
-# Store state in memory for CSRF protection
+# Store state in memory for CSRF protection and user routing
 _states = {}
 
 @router.get("/login")
-async def login():
+async def login(user_id: str = Query("default_user")):
     state = secrets.token_urlsafe(16)
-    _states[state] = True
+    _states[state] = user_id
 
     params = "&".join([
         "response_type=code",
@@ -37,6 +37,11 @@ async def login():
 
 @router.get("/callback")
 async def callback(code: str, state: str = None):
+    if not state or state not in _states:
+        raise HTTPException(status_code=400, detail="Invalid or missing OAuth state")
+
+    user_id = _states.pop(state)
+
     # Exchange code for tokens manually — no PKCE
     async with httpx.AsyncClient() as client:
         response = await client.post(
@@ -63,7 +68,7 @@ async def callback(code: str, state: str = None):
         "client_secret": settings.google_client_secret,
         "scopes":        token_json.get("scope", SCOPES).split(),
     }
-    save_token("default_user", token_data)
+    save_token(user_id, token_data)
 
     return JSONResponse({
         "status": "success",
@@ -72,13 +77,13 @@ async def callback(code: str, state: str = None):
     })
 
 @router.get("/status")
-async def status():
-    token = get_token("default_user")
+async def status(user_id: str = Query("default_user")):
+    token = get_token(user_id)
     if token:
         return {"connected": True, "scopes": token.get("scopes", [])}
     return {"connected": False}
 
 @router.delete("/logout")
-async def logout():
-    delete_token("default_user")
+async def logout(user_id: str = Query("default_user")):
+    delete_token(user_id)
     return {"status": "logged out"}

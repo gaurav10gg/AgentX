@@ -45,6 +45,7 @@ def _save(tasks: list):
 
 def add_task(
     session_id: str,
+    user_id: str,
     tool_name: str,
     tool_args: dict,
     execute_at: datetime,
@@ -65,6 +66,7 @@ def add_task(
     tasks.append({
         "task_id":     task_id,
         "session_id":  session_id,
+        "user_id":     user_id,
         "tool_name":   tool_name,
         "tool_args":   tool_args,
         "execute_at":  execute_at.isoformat(),
@@ -78,17 +80,18 @@ def add_task(
     return task_id
 
 
-def get_token_for_task(task_id: str) -> Optional[dict]:
+def get_token_for_task(task: dict) -> Optional[dict]:
     """
     Retrieve the in-memory token for a task.
     Falls back to token_store (refreshed from disk) if not in cache —
     handles server restarts after the task was saved.
     """
+    task_id = task["task_id"]
     if task_id in _token_cache:
         return _token_cache[task_id]
     try:
         from auth.token_store import refresh_token_if_needed
-        return refresh_token_if_needed("default_user")
+        return refresh_token_if_needed(task.get("user_id", "default_user"))
     except Exception:
         return None
 
