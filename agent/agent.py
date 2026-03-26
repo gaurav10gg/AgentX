@@ -65,6 +65,15 @@ SCHEDULABLE_TOOLS = {t["function"]["name"] for t in TOOL_DEFINITIONS}
 # ---------------------------------------------------------------------------
 
 IST_OFFSET = timedelta(hours=5, minutes=30)
+REMINDER_KEYWORDS = {
+    "remind",
+    "reminder",
+    "alert",
+    "alarm",
+    "ping",
+    "wake",
+    "water",
+}
 
 
 def _looks_like_reminder(description: str) -> bool:

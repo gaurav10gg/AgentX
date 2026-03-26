@@ -1,7 +1,7 @@
 # server.py
 from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 import uvicorn
 import traceback
@@ -9,6 +9,7 @@ import re
 
 from agent.agent import run_agent
 from agent.scheduler import scheduler
+from agent_v2.router import router as v2_router
 from auth.google_oauth import router as auth_router
 from auth.token_store import refresh_token_if_needed
 from config.settings import settings, PROVIDER_PRESETS
@@ -30,10 +31,12 @@ async def add_ngrok_header(request: Request, call_next):
     return response
 
 app.include_router(auth_router)
+app.include_router(v2_router)
 
 
 # ── Scheduler lifecycle ──────────────────────────────────────────────────────
 
+@app.on_event("startup")
 async def startup():
     from auth.google_oauth import start_cleanup_task
     start_cleanup_task()                    # ← add this
@@ -95,12 +98,12 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
-    actions_taken: list = []
+    actions_taken: list = Field(default_factory=list)
     alarm_data: Optional[dict] = None
     requires_confirmation: bool = False
     iterations: int = 0
     # Completed task notifications delivered alongside this reply
-    task_notifications: list = []
+    task_notifications: list = Field(default_factory=list)
 
 
 # ── Routes ───────────────────────────────────────────────────────────────────
