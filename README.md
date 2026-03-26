@@ -14,9 +14,9 @@
 
 ---
 
-## What is PhoneX?
+## What is AgentX?
 
-PhoneX is a local-first mobile AI agent platform:
+AgentX is a local-first mobile AI agent platform:
 
 - You send natural language in your app.
 - Backend runs a ReAct-style loop (reason -> tool -> observe).
