@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     max_iterations: int = 10
     tool_timeout_seconds: int = 15
     conversation_memory_length: int = 20
+    v2_max_llm_calls_per_task: int = 4
+    v2_max_recovery_attempts: int = 2
+    v2_llm_token_budget: int = 6000
     host: str = "0.0.0.0"
     port: int = 8000
     debug: bool = True

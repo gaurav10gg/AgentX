@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from typing import Dict, List, Optional
 
+from tools.android.apps import swiggy as swiggy_adapter
+
 from .schemas import DeviceObservation, NormalizedElement, NormalizedScreen, RawUiNode
 from .screen_signature import compute_screen_signature
 
@@ -47,7 +49,10 @@ def normalize_observation(observation: DeviceObservation) -> NormalizedScreen:
         elements=elements,
         anchors=sorted(set(anchors)),
         candidates=_dedupe_candidates(candidates),
+        metadata={},
     )
+    if swiggy_adapter.is_swiggy_package(provisional.app_package):
+        provisional = _enrich_swiggy_screen(provisional)
     provisional.screen_signature = compute_screen_signature(provisional)
     provisional.screen_id = f"{provisional.app_package or 'screen'}::{provisional.screen_signature}"
     return provisional
@@ -226,4 +231,42 @@ def _escape(value: str) -> str:
         .replace("<", "&lt;")
         .replace(">", "&gt;")
         .replace('"', "&quot;")
+    )
+
+
+def _enrich_swiggy_screen(screen: NormalizedScreen) -> NormalizedScreen:
+    element_dicts = [
+        {
+            "id": element.id,
+            "label": element.label,
+            "resource_id": element.resource_id,
+            "clickable": element.clickable,
+            "editable": element.editable,
+            "scrollable": element.scrollable,
+        }
+        for element in screen.elements
+    ]
+    adapter_candidates = swiggy_adapter.extract_candidates(element_dicts)
+    adapter_anchors = swiggy_adapter.infer_anchors(element_dicts)
+    screen_type = swiggy_adapter.detect_screen_type(element_dicts)
+    popup_action = swiggy_adapter.choose_popup_action(element_dicts)
+    search_input_id = swiggy_adapter.choose_search_input(element_dicts)
+    checkout_id = swiggy_adapter.choose_checkout_action(element_dicts)
+
+    merged_candidates = _dedupe_candidates(screen.candidates + adapter_candidates)
+    merged_anchors = sorted(set(screen.anchors + adapter_anchors))
+
+    return screen.model_copy(
+        update={
+            "candidates": merged_candidates,
+            "anchors": merged_anchors,
+            "metadata": {
+                **screen.metadata,
+                "adapter": "swiggy",
+                "screen_type": screen_type,
+                "popup_action": popup_action,
+                "search_input_id": search_input_id,
+                "checkout_id": checkout_id,
+            },
+        }
     )

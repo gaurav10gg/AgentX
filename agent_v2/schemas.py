@@ -91,6 +91,7 @@ class NormalizedScreen(BaseModel):
     elements: List[NormalizedElement] = Field(default_factory=list)
     anchors: List[str] = Field(default_factory=list)
     candidates: List[Dict[str, Any]] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class AgentAction(BaseModel):
@@ -130,6 +131,10 @@ class V2TaskState(BaseModel):
     pending_action: Optional[AgentAction] = None
     reply: str = ""
     history: List[Dict[str, Any]] = Field(default_factory=list)
+    llm_calls: int = 0
+    estimated_llm_tokens: int = 0
+    recovery_attempts: int = 0
+    last_error: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 

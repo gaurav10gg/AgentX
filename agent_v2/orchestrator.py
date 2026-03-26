@@ -5,11 +5,12 @@ from datetime import datetime
 from typing import Optional
 from uuid import uuid4
 
+from config.settings import settings
 from providers.index import get_provider
 
 from .app_registry import resolve_app
 from .decision import decide_next_action
-from .intent import classify_intent
+from .intent import classify_intent, refine_intent_with_llm
 from .memory_store import (
     get_task_flow,
     list_task_states,
@@ -19,6 +20,7 @@ from .memory_store import (
     save_task_state,
 )
 from .normalize import normalize_observation
+from .offline_learning import record_transition
 from .schemas import (
     ActionResultRequest,
     AgentAction,
@@ -33,6 +35,7 @@ from .schemas import (
 
 async def handle_chat(req: V2ChatRequest) -> V2ChatResponse:
     intent = classify_intent(req.message)
+    intent = await refine_intent_with_llm(intent, req.message, req.provider, req.api_key, req.model, req.base_url)
     existing = _load_state_model(req.session_id)
     now = datetime.utcnow().isoformat()
 
@@ -135,11 +138,20 @@ async def handle_observation(
             next_screen_signature=normalized.screen_signature,
             success=True,
         )
+        record_transition(
+            app_package=normalized.app_package or task_state.current_package or "unknown",
+            from_signature=previous_signature,
+            action_key=_action_to_key(task_state.pending_action),
+            to_signature=normalized.screen_signature,
+            success=True,
+        )
 
     task_state.latest_observation = observation
     task_state.latest_screen = normalized
     task_state.current_package = normalized.app_package or task_state.current_package
     task_state.updated_at = datetime.utcnow().isoformat()
+    task_state.recovery_attempts = 0
+    task_state.last_error = None
     task_state.history.append(
         {
             "at": task_state.updated_at,
@@ -212,6 +224,8 @@ async def handle_action_result(
     task_state.updated_at = datetime.utcnow().isoformat()
 
     if not req.success and task_state.latest_screen:
+        task_state.recovery_attempts += 1
+        task_state.last_error = req.result or "Device action failed."
         remember_navigation(
             app_package=task_state.current_package or task_state.latest_screen.app_package or "unknown",
             screen_signature=task_state.latest_screen.screen_signature,
@@ -219,6 +233,21 @@ async def handle_action_result(
             next_screen_signature=task_state.latest_screen.screen_signature,
             success=False,
         )
+        record_transition(
+            app_package=task_state.current_package or task_state.latest_screen.app_package or "unknown",
+            from_signature=task_state.latest_screen.screen_signature,
+            action_key=_action_to_key(req.action),
+            to_signature=task_state.latest_screen.screen_signature,
+            success=False,
+        )
+        if task_state.recovery_attempts > settings.v2_max_recovery_attempts:
+            task_state.status = "awaiting_user"
+            task_state.reply = (
+                "I hit repeated automation failures on this screen. "
+                "Please adjust the app manually or send a fresh screen state."
+            )
+            _persist_state(task_state)
+            return ObserveResponse(reply=task_state.reply, task_state=task_state)
 
     if req.observation:
         return await handle_observation(
@@ -252,7 +281,7 @@ async def _decide_from_screen(task_state: V2TaskState, req: V2ChatRequest) -> V2
     memory_note = f"Known flow confidence: {flow_hint['confidence']:.2f}" if flow_hint else None
     next_action, explanation = decide_next_action(task_state.intent, screen)
 
-    if task_state.intent.requires_llm and _should_use_llm(next_action):
+    if task_state.intent.requires_llm and _should_use_llm(task_state, next_action):
         llm_action = await _ask_llm_for_action(task_state, req)
         if llm_action is not None:
             next_action = llm_action
@@ -280,6 +309,12 @@ async def _decide_from_screen(task_state: V2TaskState, req: V2ChatRequest) -> V2
 async def _ask_llm_for_action(task_state: V2TaskState, req: V2ChatRequest) -> Optional[AgentAction]:
     if not req.api_key:
         return None
+    if task_state.llm_calls >= settings.v2_max_llm_calls_per_task:
+        task_state.reply = "LLM planning budget reached for this task. Need a more explicit screen or a simpler instruction."
+        return None
+    if task_state.estimated_llm_tokens >= settings.v2_llm_token_budget:
+        task_state.reply = "Token budget reached for this task. Please narrow the request or resend from the current screen."
+        return None
 
     llm = get_provider(provider=req.provider, api_key=req.api_key, model=req.model, base_url=req.base_url)
     screen = task_state.latest_screen
@@ -299,12 +334,15 @@ async def _ask_llm_for_action(task_state: V2TaskState, req: V2ChatRequest) -> Op
     }
 
     try:
+        estimated_tokens = _estimate_tokens(user_prompt["html"]) + _estimate_tokens(task_state.message)
         content = await llm.chat(
             messages=[{"role": "user", "content": json.dumps(user_prompt)}],
             system_prompt=system_prompt,
             temperature=0.1,
             max_tokens=300,
         )
+        task_state.llm_calls += 1
+        task_state.estimated_llm_tokens += estimated_tokens + _estimate_tokens(content)
         parsed = json.loads(content)
         return AgentAction(**parsed)
     except Exception:
@@ -349,7 +387,29 @@ def _task_key(task_state: V2TaskState) -> str:
     return f"{app}::{query or task_state.mode}"
 
 
-def _should_use_llm(next_action: Optional[AgentAction]) -> bool:
+def _should_use_llm(task_state: V2TaskState, next_action: Optional[AgentAction]) -> bool:
     if next_action is None:
         return True
-    return next_action.action in ("wait_for",)
+    if task_state.last_error:
+        return True
+    if task_state.recovery_attempts > 0:
+        return True
+    if next_action.action == "wait_for":
+        return True
+    if next_action.action == "scroll" and _recent_scrolls(task_state) >= 1:
+        return True
+    if next_action.action == "ask_user" and task_state.intent and task_state.intent.extracted_query:
+        return True
+    screen_type = (task_state.latest_screen.metadata.get("screen_type") if task_state.latest_screen else None)
+    if next_action.action == "tap_element" and screen_type == "unknown":
+        return True
+    return False
+
+
+def _recent_scrolls(task_state: V2TaskState) -> int:
+    return sum(1 for item in task_state.history[-5:] if item.get("type") == "action_result" and item.get("action", {}).get("action") == "scroll")
+
+
+def _estimate_tokens(value) -> int:
+    text = value if isinstance(value, str) else json.dumps(value)
+    return max(1, len(text) // 4)

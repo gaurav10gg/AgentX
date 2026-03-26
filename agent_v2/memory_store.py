@@ -58,6 +58,15 @@ def _conn():
         )
         """
     )
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS v2_task_states (
+            session_id TEXT PRIMARY KEY,
+            state_json TEXT NOT NULL,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
     con.commit()
     return con
 
@@ -173,17 +182,40 @@ def get_element_hint(app_package: Optional[str], screen_signature: Optional[str]
 
 
 def save_task_state(task_state: Dict[str, Any]):
-    tasks = _load_task_states()
-    tasks[task_state["session_id"]] = task_state
-    TASK_FILE.write_text(json.dumps(tasks, indent=2), encoding="utf-8")
+    _migrate_task_file_if_needed()
+    with _conn() as con:
+        con.execute(
+            """
+            INSERT INTO v2_task_states (session_id, state_json, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(session_id)
+            DO UPDATE SET state_json=excluded.state_json, updated_at=excluded.updated_at
+            """,
+            (
+                task_state["session_id"],
+                json.dumps(task_state),
+                datetime.utcnow().isoformat(),
+            ),
+        )
 
 
 def load_task_state(session_id: str) -> Optional[Dict[str, Any]]:
-    return _load_task_states().get(session_id)
+    _migrate_task_file_if_needed()
+    with _conn() as con:
+        row = con.execute(
+            "SELECT state_json FROM v2_task_states WHERE session_id=?",
+            (session_id,),
+        ).fetchone()
+    if not row:
+        return None
+    return json.loads(row[0])
 
 
 def list_task_states() -> List[Dict[str, Any]]:
-    return list(_load_task_states().values())
+    _migrate_task_file_if_needed()
+    with _conn() as con:
+        rows = con.execute("SELECT state_json FROM v2_task_states ORDER BY updated_at DESC").fetchall()
+    return [json.loads(row[0]) for row in rows]
 
 
 def save_snapshot(screen_id: str, payload: Dict[str, Any]):
@@ -210,3 +242,22 @@ def _load_task_states() -> Dict[str, Dict[str, Any]]:
         return json.loads(TASK_FILE.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return {}
+
+
+def _migrate_task_file_if_needed():
+    if not TASK_FILE.exists():
+        return
+    tasks = _load_task_states()
+    if not tasks:
+        TASK_FILE.unlink(missing_ok=True)
+        return
+    with _conn() as con:
+        for session_id, task_state in tasks.items():
+            con.execute(
+                """
+                INSERT OR IGNORE INTO v2_task_states (session_id, state_json, updated_at)
+                VALUES (?, ?, ?)
+                """,
+                (session_id, json.dumps(task_state), datetime.utcnow().isoformat()),
+            )
+    TASK_FILE.unlink(missing_ok=True)

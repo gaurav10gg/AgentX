@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Optional
 
+from tools.android.apps import swiggy as swiggy_adapter
+
 from .constraints import filter_candidates, has_hard_constraint_conflict
 from .memory_store import get_best_navigation_action, get_element_hint, remember_element
 from .schemas import AgentAction, IntentResult, NormalizedScreen
@@ -14,6 +16,16 @@ def decide_next_action(
 ):
     if intent.kind.value == "ui_automation" and intent.target_package and not screen.app_package:
         return AgentAction(id="open_target_app", action="open_app", package_name=intent.target_package), None
+
+    if swiggy_adapter.is_swiggy_package(screen.app_package):
+        popup_action = screen.metadata.get("popup_action")
+        if popup_action and popup_action.get("element_id"):
+            return AgentAction(
+                id="resolve_popup",
+                action="tap_element",
+                element_id=str(popup_action["element_id"]),
+                reason_code=str(popup_action.get("reason", "popup_interrupt")),
+            ), "Resolved an interrupting popup before continuing."
 
     filtered = filter_candidates(screen, intent.constraints)
     if has_hard_constraint_conflict(filtered, intent.constraints):
@@ -32,6 +44,16 @@ def decide_next_action(
 
     search_hint = get_element_hint(screen.app_package, screen.screen_signature, "search")
     query = intent.extracted_query or intent.constraints.item_query
+    adapter_search_id = screen.metadata.get("search_input_id")
+    if adapter_search_id and query:
+        remember_element(screen.app_package or "", screen.screen_signature, "search", str(adapter_search_id), confidence=0.9)
+        return AgentAction(
+            id="type_search_from_adapter",
+            action="type_text",
+            element_id=str(adapter_search_id),
+            input_text=query,
+            reason_code="adapter_search_input",
+        ), "Using Swiggy search field from app-specific adapter."
     if search_hint and query:
         return AgentAction(
             id="type_search_from_memory",
@@ -62,6 +84,15 @@ def decide_next_action(
             reason_code="constraint_best_candidate",
             metadata={"candidate": best},
         ), None
+
+    checkout_id = screen.metadata.get("checkout_id")
+    if checkout_id:
+        return AgentAction(
+            id="stop_before_checkout",
+            action="complete",
+            reason_code="safety_checkout_boundary",
+            metadata={"message": "Reached checkout boundary. Waiting for explicit confirmation."},
+        ), "Reached checkout boundary and stopped for safety."
 
     for element in screen.elements:
         lowered = element.label.lower()
