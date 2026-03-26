@@ -1,4 +1,4 @@
-﻿# <span style="color:#FF6B35;">PhoneX</span> <span style="color:#EF4444;">V1</span>
+﻿# <span style="color:#FF6B35;">AgentX</span> <span style="color:#EF4444;">V1</span>
 
 <p align="center">
   <b><span style="color:#FF6B35;">AI agent for your phone.</span></b><br/>
