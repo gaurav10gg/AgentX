@@ -138,6 +138,7 @@ class V2TaskState(BaseModel):
     llm_calls: int = 0
     estimated_llm_tokens: int = 0
     classifier_calls: int = 0
+    stagnant_scrolls: int = 0
     recovery_attempts: int = 0
     last_error: Optional[str] = None
     created_at: Optional[str] = None

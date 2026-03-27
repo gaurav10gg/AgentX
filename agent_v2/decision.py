@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from config.settings import settings
 from tools.android.apps import swiggy as swiggy_adapter
 
 from .constraints import filter_candidates, has_hard_constraint_conflict
@@ -12,8 +13,9 @@ from .schemas import AgentAction, IntentResult, NormalizedScreen
 def decide_next_action(
     intent: IntentResult,
     screen: NormalizedScreen,
-    memory_threshold: float = 0.82,
+    memory_threshold: Optional[float] = None,
 ):
+    memory_threshold = memory_threshold if memory_threshold is not None else settings.v2_memory_shortcut_threshold
     if intent.kind.value == "ui_automation" and intent.target_package and not screen.app_package:
         return AgentAction(id="open_target_app", action="open_app", package_name=intent.target_package), None
 
@@ -89,9 +91,12 @@ def decide_next_action(
     if checkout_id:
         return AgentAction(
             id="stop_before_checkout",
-            action="complete",
+            action="ask_user",
             reason_code="safety_checkout_boundary",
-            metadata={"message": "Reached checkout boundary. Waiting for explicit confirmation."},
+            metadata={
+                "message": "Reached checkout boundary. Confirm to continue with checkout.",
+                "confirm_action": {"action": "tap_element", "element_id": str(checkout_id), "reason_code": "user_confirm_checkout"},
+            },
         ), "Reached checkout boundary and stopped for safety."
 
     for element in screen.elements:
@@ -99,9 +104,12 @@ def decide_next_action(
         if "checkout" in lowered or "place order" in lowered:
             return AgentAction(
                 id="stop_before_checkout",
-                action="complete",
+                action="ask_user",
                 reason_code="safety_checkout_boundary",
-                metadata={"message": "Reached checkout boundary. Waiting for explicit confirmation."},
+                metadata={
+                    "message": "Reached checkout boundary. Confirm to continue with checkout.",
+                    "confirm_action": {"action": "tap_element", "element_id": element.id, "reason_code": "user_confirm_checkout"},
+                },
             ), "Reached checkout boundary and stopped for safety."
 
     for element in screen.elements:

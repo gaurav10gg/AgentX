@@ -39,8 +39,11 @@ from .schemas import (
 
 
 async def handle_chat(req: V2ChatRequest) -> V2ChatResponse:
-    intent = classify_intent(req.message)
     existing = _load_state_model(req.session_id)
+    if existing and _is_checkout_confirmation(existing, req.message):
+        return _resume_checkout_after_confirmation(existing, req)
+
+    intent = classify_intent(req.message)
     now = datetime.utcnow().isoformat()
 
     task_state = existing or V2TaskState(
@@ -144,6 +147,7 @@ async def handle_observation(
         created_at=datetime.utcnow().isoformat(),
         updated_at=datetime.utcnow().isoformat(),
     )
+    original_fingerprint = _state_persistence_fingerprint(task_state)
 
     normalized = normalize_observation(observation)
     save_snapshot(normalized.screen_id, normalized.model_dump())
@@ -165,6 +169,8 @@ async def handle_observation(
             success=True,
         )
 
+    executed_action = task_state.pending_action
+    was_scroll_action = bool(executed_action and executed_action.action == "scroll")
     task_state.latest_observation = observation
     task_state.latest_screen = normalized
     task_state.current_package = normalized.app_package or task_state.current_package
@@ -182,7 +188,13 @@ async def handle_observation(
     )
     task_state.history = task_state.history[-50:]
 
-    if task_state.intent and should_reclassify_on_context_change(task_state.intent, observation.foreground_app):
+    if was_scroll_action and previous_signature:
+        task_state.stagnant_scrolls = task_state.stagnant_scrolls + 1 if previous_signature == normalized.screen_signature else 0
+    elif not was_scroll_action:
+        task_state.stagnant_scrolls = 0
+
+    skip_reclassification = _is_expected_open_app_transition(task_state, observation.foreground_app)
+    if task_state.intent and not skip_reclassification and should_reclassify_on_context_change(task_state.intent, observation.foreground_app):
         if task_state.classifier_calls < settings.v2_max_classifier_calls_per_task:
             refreshed = classify_intent(task_state.message)
             if should_use_llm_classifier(refreshed):
@@ -239,7 +251,7 @@ async def handle_observation(
         reply = decision_response.reply
         next_action = decision_response.next_action
 
-    _persist_state(task_state)
+    _persist_state_if_changed(task_state, original_fingerprint)
     return ObserveResponse(
         reply=reply,
         task_state=task_state,
@@ -342,6 +354,20 @@ async def _decide_from_screen(task_state: V2TaskState, req: V2ChatRequest) -> V2
         if llm_action is not None:
             next_action = llm_action
 
+    if next_action and next_action.action == "scroll" and task_state.stagnant_scrolls >= 2:
+        next_action = AgentAction(
+            id=f"act_{uuid4().hex[:8]}",
+            action="ask_user",
+            reason_code="scroll_exhausted_no_progress",
+            metadata={
+                "message": (
+                    "I tried scrolling but the screen did not change twice in a row. "
+                    "Please open a different section/filter or confirm how to proceed."
+                )
+            },
+        )
+        explanation = "Stopped automatic scrolling because the UI did not progress."
+
     task_state.pending_action = next_action
     task_state.reply = explanation or _default_reply(task_state, next_action, memory_note)
     if next_action is None:
@@ -427,6 +453,11 @@ def _persist_state(task_state: V2TaskState):
     save_task_state(task_state.model_dump(mode="json"))
 
 
+def _persist_state_if_changed(task_state: V2TaskState, previous_fingerprint: str):
+    if _state_persistence_fingerprint(task_state) != previous_fingerprint:
+        _persist_state(task_state)
+
+
 def _load_state_model(session_id: str) -> Optional[V2TaskState]:
     raw = load_task_state(session_id)
     return V2TaskState.model_validate(raw) if raw else None
@@ -459,7 +490,7 @@ def _should_use_llm(task_state: V2TaskState, next_action: Optional[AgentAction])
         return True
     if next_action.action == "wait_for":
         return True
-    if next_action.action == "scroll" and _recent_scrolls(task_state) >= 1:
+    if next_action.action == "scroll" and _recent_scrolls(task_state) >= 2:
         return True
     if next_action.action == "ask_user" and task_state.intent and task_state.intent.extracted_query:
         return True
@@ -476,3 +507,89 @@ def _recent_scrolls(task_state: V2TaskState) -> int:
 def _estimate_tokens(value) -> int:
     text = value if isinstance(value, str) else json.dumps(value)
     return max(1, len(text) // 4)
+
+
+def _state_persistence_fingerprint(task_state: V2TaskState) -> str:
+    signature = task_state.latest_screen.screen_signature if task_state.latest_screen else None
+    fingerprint_payload = {
+        "status": task_state.status,
+        "mode": task_state.mode,
+        "message": task_state.message,
+        "intent": task_state.intent.model_dump(mode="json") if task_state.intent else None,
+        "current_app": task_state.current_app,
+        "current_package": task_state.current_package,
+        "pending_action": task_state.pending_action.model_dump(mode="json") if task_state.pending_action else None,
+        "reply": task_state.reply,
+        "llm_calls": task_state.llm_calls,
+        "classifier_calls": task_state.classifier_calls,
+        "recovery_attempts": task_state.recovery_attempts,
+        "stagnant_scrolls": task_state.stagnant_scrolls,
+        "last_error": task_state.last_error,
+        "screen_signature": signature,
+    }
+    return json.dumps(fingerprint_payload, sort_keys=True)
+
+
+def _is_expected_open_app_transition(task_state: V2TaskState, foreground_app: Optional[str]) -> bool:
+    if not task_state.intent or not task_state.pending_action:
+        return False
+    if task_state.pending_action.action != "open_app":
+        return False
+    target_package = task_state.pending_action.package_name or task_state.intent.target_package
+    if not target_package:
+        return False
+    return foreground_app != target_package
+
+
+def _is_checkout_confirmation(task_state: V2TaskState, message: str) -> bool:
+    if task_state.status != "awaiting_user":
+        return False
+    if not task_state.pending_action or task_state.pending_action.action != "ask_user":
+        return False
+    if task_state.pending_action.reason_code != "safety_checkout_boundary":
+        return False
+    lowered = (message or "").strip().lower()
+    return lowered in {"yes", "y", "confirm", "continue", "proceed", "go ahead", "ok", "okay"}
+
+
+def _resume_checkout_after_confirmation(task_state: V2TaskState, req: V2ChatRequest) -> V2ChatResponse:
+    confirm_action = (task_state.pending_action.metadata or {}).get("confirm_action") if task_state.pending_action else None
+    if not isinstance(confirm_action, dict):
+        task_state.reply = "Checkout confirmation noted, but I could not find the target button. Please send a fresh screen."
+        _persist_state(task_state)
+        return V2ChatResponse(mode=task_state.mode, reply=task_state.reply, task_state=task_state)
+
+    action_name = str(confirm_action.get("action", "tap_element"))
+    if action_name not in {"tap_element", "type_text", "scroll", "wait_for", "press_back", "press_home", "open_app"}:
+        action_name = "tap_element"
+    next_action = AgentAction(
+        id=f"act_{uuid4().hex[:8]}",
+        action=action_name,
+        element_id=confirm_action.get("element_id"),
+        input_text=confirm_action.get("input_text"),
+        package_name=confirm_action.get("package_name"),
+        direction=confirm_action.get("direction"),
+        timeout_ms=confirm_action.get("timeout_ms"),
+        reason_code=str(confirm_action.get("reason_code", "user_confirm_checkout")),
+    )
+    task_state.status = "active"
+    task_state.pending_action = next_action
+    task_state.reply = "Confirmed. Continuing checkout flow now."
+    task_state.updated_at = datetime.utcnow().isoformat()
+    task_state.history.append(
+        {
+            "at": task_state.updated_at,
+            "type": "user_confirmation",
+            "message": req.message,
+            "reason": "safety_checkout_boundary",
+        }
+    )
+    task_state.history = task_state.history[-50:]
+    _persist_state(task_state)
+    return V2ChatResponse(
+        mode=task_state.mode,
+        reply=task_state.reply,
+        task_state=task_state,
+        requires_device_action=True,
+        next_action=next_action,
+    )

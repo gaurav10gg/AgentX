@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     v2_max_llm_calls_per_task: int = 4
     v2_max_recovery_attempts: int = 2
     v2_llm_token_budget: int = 6000
+    v2_memory_shortcut_threshold: float = 0.88
     v2_intent_confidence_accept_threshold: float = 0.88
     v2_classifier_temperature: float = 0.0
     v2_max_classifier_calls_per_task: int = 1
