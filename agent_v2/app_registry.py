@@ -43,6 +43,27 @@ def resolve_app(app_name: Optional[str]) -> Optional[Dict[str, object]]:
     return None
 
 
+def find_matching_apps(app_name: Optional[str]) -> List[Dict[str, object]]:
+    if not app_name:
+        return []
+
+    needle = app_name.strip().lower()
+    matches: List[Dict[str, object]] = []
+    for app in APP_REGISTRY.values():
+        aliases = [str(alias).lower() for alias in app.get("aliases", [])]
+        if needle == str(app["name"]).lower() or needle in aliases:
+            matches.append(app)
+
+    if matches:
+        return matches
+
+    for app in APP_REGISTRY.values():
+        aliases = [str(alias).lower() for alias in app.get("aliases", [])]
+        if any(alias in needle or needle in alias for alias in aliases):
+            matches.append(app)
+    return matches
+
+
 def list_apps() -> List[Dict[str, object]]:
     return [
         {

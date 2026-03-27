@@ -1,0 +1,133 @@
+{
+  "screen_id": "com.gaurav_10g.PhoneAgentApp::8b3b0b64b357864e",
+  "app_package": "com.gaurav_10g.PhoneAgentApp",
+  "screen_signature": "8b3b0b64b357864e",
+  "title": "PhoneAgentApp",
+  "html": "<button id=\"0.1.0\">&lt; Back</button>\n<node id=\"0.1.0.0\" role=\"text\">&lt; Back</node>\n<node id=\"0.1.1\" role=\"text\">Automation Lab</node>\n<button id=\"0.1.2\">Refresh</button>\n<node id=\"0.1.2.0\" role=\"text\">Refresh</node>\n<scroll id=\"0.1.3\" label=\"ScrollView\" />\n<node id=\"0.1.3.28\" role=\"text\">&lt;button id=&quot;0.1.0&quot;&gt;&amp;lt; Back&lt;/button&gt; &lt;node id=&quot;0.1.0.0&quot; role=&quot;text&quot;&gt;&amp;lt; Back&lt;/node&gt; &lt;node id=&quot;0.1.1&quot; role=&quot;text&quot;&gt;Automation Lab&lt;/node&gt; &lt;button id=&quot;0.1.2&quot;&gt;Refresh&lt;/button&gt; &lt;node id=&quot;0.1.2.0&quot; role=&quot;text&quot;&gt;Refresh&lt;/node&gt; &lt;scroll id=&quot;0.1.3&quot; label=&quot;ScrollView&quot; /&gt; &lt;node id=&quot;0.1.3.14&quot; role=&quot;node&quot;&gt;Send Current Screen&lt;/node&gt; &lt;node id=&quot;0.1.3.15&quot; role=&quot;text&quot;&gt;Manual Probes&lt;/node&gt; &lt;button id=&quot;0.1.3.16&quot;&gt;Capture Snapshot&lt;/button&gt; &lt;node id=&quot;0.1.3.16.0&quot; role=&quot;text&quot;&gt;Capture Snapshot&lt;/node&gt; &lt;button id=&quot;0.1.3.17&quot;&gt;Open Swiggy&lt;/button&gt; &lt;node id=&quot;0.1.3.17.0&quot; role=&quot;text&quot;&gt;Open Swiggy&lt;/node&gt; &lt;node id=&quot;0.1.3.18&quot; role=&quot;text&quot;&gt;undefined -&amp;gt; undefined&lt;/node&gt; &lt;node id=&quot;0.1.3.19&quot; role=&quot;text&quot;&gt;Current Task State&lt;/node&gt; &lt;node id=&quot;0.1.3.20&quot; role=&quot;text&quot;&gt;Mode: ui_automation&lt;/node&gt; &lt;node id=&quot;0.1.3.21&quot; role=&quot;text&quot;&gt;Status: active&lt;/node&gt; &lt;node id=&quot;0.1.3.22&quot; role=&quot;text&quot;&gt;Current package: com.android.launcher&lt;/node&gt; &lt;node id=&quot;0.1.3.23&quot; role=&quot;text&quot;&gt;Pending action: scroll&lt;/node&gt; &lt;node id=&quot;0.1.3.24&quot; role=&quot;text&quot;&gt;Prepared next action: scroll.&lt;/node&gt; &lt;node id=&quot;0.1.3.25&quot; role=&quot;text&quot;&gt;Normalized Screen&lt;/node&gt; &lt;node id=&quot;0.1.3.26&quot; role=&quot;text&quot;&gt;Signature: 537703839b8f63f2&lt;/node&gt; &lt;node id=&quot;0.1.3.27&quot; role=&quot;text&quot;&gt;Anchors: search&lt;/node&gt; &lt;node id=&quot;0.1.3.28&quot; role=&quot;text&quot;&gt;&amp;lt;button id=&amp;quot;0.1.0&amp;quot;&amp;gt;&amp;amp;lt; Back&amp;lt;/button&amp;gt; &amp;lt;node id=&amp;quot;0.1.0.0&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;&amp;amp;lt; Back&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.1&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Automation Lab&amp;lt;/node&amp;gt; &amp;lt;button id=&amp;quot;0.1.2&amp;quot;&amp;gt;Refresh&amp;lt;/button&amp;gt; &amp;lt;node id=&amp;quot;0.1.2.0&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Refresh&amp;lt;/node&amp;gt; &amp;lt;scroll id=&amp;quot;0.1.3&amp;quot; label=&amp;quot;ScrollView&amp;quot; /&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.2&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Device Readiness&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.3&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Accessibility enabled: No&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.4&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Service connected: Yes&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.5&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Fore</node>",
+  "elements": [
+    {
+      "id": "0.1.0",
+      "native_id": "0.1.0",
+      "role": "button",
+      "label": "< Back",
+      "text": null,
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": true,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.0",
+      "score": 2.5,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.0.0",
+      "native_id": "0.1.0.0",
+      "role": "text",
+      "label": "< Back",
+      "text": "< Back",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.0.0",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.1",
+      "native_id": "0.1.1",
+      "role": "text",
+      "label": "Automation Lab",
+      "text": "Automation Lab",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.1",
+      "score": 0.0,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.2",
+      "native_id": "0.1.2",
+      "role": "button",
+      "label": "Refresh",
+      "text": null,
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": true,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.2",
+      "score": 2.5,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.2.0",
+      "native_id": "0.1.2.0",
+      "role": "text",
+      "label": "Refresh",
+      "text": "Refresh",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.2.0",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3",
+      "native_id": "0.1.3",
+      "role": "scroll",
+      "label": "ScrollView",
+      "text": null,
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": true,
+      "path": "0.1.3",
+      "score": 0.0,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.3.28",
+      "native_id": "0.1.3.28",
+      "role": "text",
+      "label": "<button id=\"0.1.0\">&lt; Back</button> <node id=\"0.1.0.0\" role=\"text\">&lt; Back</node> <node id=\"0.1.1\" role=\"text\">Automation Lab</node> <button id=\"0.1.2\">Refresh</button> <node id=\"0.1.2.0\" role=\"text\">Refresh</node> <scroll id=\"0.1.3\" label=\"ScrollView\" /> <node id=\"0.1.3.14\" role=\"node\">Send Current Screen</node> <node id=\"0.1.3.15\" role=\"text\">Manual Probes</node> <button id=\"0.1.3.16\">Capture Snapshot</button> <node id=\"0.1.3.16.0\" role=\"text\">Capture Snapshot</node> <button id=\"0.1.3.17\">Open Swiggy</button> <node id=\"0.1.3.17.0\" role=\"text\">Open Swiggy</node> <node id=\"0.1.3.18\" role=\"text\">undefined -&gt; undefined</node> <node id=\"0.1.3.19\" role=\"text\">Current Task State</node> <node id=\"0.1.3.20\" role=\"text\">Mode: ui_automation</node> <node id=\"0.1.3.21\" role=\"text\">Status: active</node> <node id=\"0.1.3.22\" role=\"text\">Current package: com.android.launcher</node> <node id=\"0.1.3.23\" role=\"text\">Pending action: scroll</node> <node id=\"0.1.3.24\" role=\"text\">Prepared next action: scroll.</node> <node id=\"0.1.3.25\" role=\"text\">Normalized Screen</node> <node id=\"0.1.3.26\" role=\"text\">Signature: 537703839b8f63f2</node> <node id=\"0.1.3.27\" role=\"text\">Anchors: search</node> <node id=\"0.1.3.28\" role=\"text\">&lt;button id=&quot;0.1.0&quot;&gt;&amp;lt; Back&lt;/button&gt; &lt;node id=&quot;0.1.0.0&quot; role=&quot;text&quot;&gt;&amp;lt; Back&lt;/node&gt; &lt;node id=&quot;0.1.1&quot; role=&quot;text&quot;&gt;Automation Lab&lt;/node&gt; &lt;button id=&quot;0.1.2&quot;&gt;Refresh&lt;/button&gt; &lt;node id=&quot;0.1.2.0&quot; role=&quot;text&quot;&gt;Refresh&lt;/node&gt; &lt;scroll id=&quot;0.1.3&quot; label=&quot;ScrollView&quot; /&gt; &lt;node id=&quot;0.1.3.2&quot; role=&quot;text&quot;&gt;Device Readiness&lt;/node&gt; &lt;node id=&quot;0.1.3.3&quot; role=&quot;text&quot;&gt;Accessibility enabled: No&lt;/node&gt; &lt;node id=&quot;0.1.3.4&quot; role=&quot;text&quot;&gt;Service connected: Yes&lt;/node&gt; &lt;node id=&quot;0.1.3.5&quot; role=&quot;text&quot;&gt;Fore",
+      "text": "<button id=\"0.1.0\">&lt; Back</button>\n<node id=\"0.1.0.0\" role=\"text\">&lt; Back</node>\n<node id=\"0.1.1\" role=\"text\">Automation Lab</node>\n<button id=\"0.1.2\">Refresh</button>\n<node id=\"0.1.2.0\" role=\"text\">Refresh</node>\n<scroll id=\"0.1.3\" label=\"ScrollView\" />\n<node id=\"0.1.3.14\" role=\"node\">Send Current Screen</node>\n<node id=\"0.1.3.15\" role=\"text\">Manual Probes</node>\n<button id=\"0.1.3.16\">Capture Snapshot</button>\n<node id=\"0.1.3.16.0\" role=\"text\">Capture Snapshot</node>\n<button id=\"0.1.3.17\">Open Swiggy</button>\n<node id=\"0.1.3.17.0\" role=\"text\">Open Swiggy</node>\n<node id=\"0.1.3.18\" role=\"text\">undefined -&gt; undefined</node>\n<node id=\"0.1.3.19\" role=\"text\">Current Task State</node>\n<node id=\"0.1.3.20\" role=\"text\">Mode: ui_automation</node>\n<node id=\"0.1.3.21\" role=\"text\">Status: active</node>\n<node id=\"0.1.3.22\" role=\"text\">Current package: com.android.launcher</node>\n<node id=\"0.1.3.23\" role=\"text\">Pending action: scroll</node>\n<node id=\"0.1.3.24\" role=\"text\">Prepared next action: scroll.</node>\n<node id=\"0.1.3.25\" role=\"text\">Normalized Screen</node>\n<node id=\"0.1.3.26\" role=\"text\">Signature: 537703839b8f63f2</node>\n<node id=\"0.1.3.27\" role=\"text\">Anchors: search</node>\n<node id=\"0.1.3.28\" role=\"text\">&lt;button id=&quot;0.1.0&quot;&gt;&amp;lt; Back&lt;/button&gt; &lt;node id=&quot;0.1.0.0&quot; role=&quot;text&quot;&gt;&amp;lt; Back&lt;/node&gt; &lt;node id=&quot;0.1.1&quot; role=&quot;text&quot;&gt;Automation Lab&lt;/node&gt; &lt;button id=&quot;0.1.2&quot;&gt;Refresh&lt;/button&gt; &lt;node id=&quot;0.1.2.0&quot; role=&quot;text&quot;&gt;Refresh&lt;/node&gt; &lt;scroll id=&quot;0.1.3&quot; label=&quot;ScrollView&quot; /&gt; &lt;node id=&quot;0.1.3.2&quot; role=&quot;text&quot;&gt;Device Readiness&lt;/node&gt; &lt;node id=&quot;0.1.3.3&quot; role=&quot;text&quot;&gt;Accessibility enabled: No&lt;/node&gt; &lt;node id=&quot;0.1.3.4&quot; role=&quot;text&quot;&gt;Service connected: Yes&lt;/node&gt; &lt;node id=&quot;0.1.3.5&quot; role=&quot;text&quot;&gt;Fore",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.28",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    }
+  ],
+  "anchors": [
+    "search"
+  ],
+  "candidates": [],
+  "metadata": {}
+}

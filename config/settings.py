@@ -1,6 +1,8 @@
 # config/settings.py
-from pydantic_settings import BaseSettings
 from typing import Optional
+
+from pydantic_settings import BaseSettings
+
 
 class Settings(BaseSettings):
     llm_provider: str = "sarvam"
@@ -17,6 +19,9 @@ class Settings(BaseSettings):
     v2_max_llm_calls_per_task: int = 4
     v2_max_recovery_attempts: int = 2
     v2_llm_token_budget: int = 6000
+    v2_intent_confidence_accept_threshold: float = 0.88
+    v2_classifier_temperature: float = 0.0
+    v2_max_classifier_calls_per_task: int = 1
     host: str = "0.0.0.0"
     port: int = 8000
     debug: bool = True
@@ -25,13 +30,14 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
 
-# THIS IS OUTSIDE THE CLASS — no indentation
+
+# THIS IS OUTSIDE THE CLASS - no indentation
 settings = Settings()
 
 PROVIDER_PRESETS = {
-    "sarvam": {"base_url": "https://api.sarvam.ai/v1",                                    "model": "sarvam-30b"},
-    "groq":   {"base_url": "https://api.groq.com/openai/v1",                              "model": "llama-3.3-70b-versatile"},
-    "gemini": {"base_url": "https://generativelanguage.googleapis.com/v1beta/openai",      "model": "gemini-2.0-flash"},
-    "openai": {"base_url": "https://api.openai.com/v1",                                   "model": "gpt-4o-mini"},
-    "custom": {"base_url": "",                                                             "model": ""},
+    "sarvam": {"base_url": "https://api.sarvam.ai/v1", "model": "sarvam-30b"},
+    "groq": {"base_url": "https://api.groq.com/openai/v1", "model": "llama-3.3-70b-versatile"},
+    "gemini": {"base_url": "https://generativelanguage.googleapis.com/v1beta/openai", "model": "gemini-2.0-flash"},
+    "openai": {"base_url": "https://api.openai.com/v1", "model": "gpt-4o-mini"},
+    "custom": {"base_url": "", "model": ""},
 }

@@ -1,0 +1,44 @@
+[
+  {
+    "from": "537703839b8f63f2",
+    "action": "scroll:down",
+    "to": "8c6d3a583d99330f",
+    "success": true,
+    "at": "2026-03-26T19:09:47.626614"
+  },
+  {
+    "from": "8c6d3a583d99330f",
+    "action": "scroll:down",
+    "to": "8b3b0b64b357864e",
+    "success": true,
+    "at": "2026-03-26T19:09:49.922240"
+  },
+  {
+    "from": "8b3b0b64b357864e",
+    "action": "scroll:down",
+    "to": "555d594889f2b3ac",
+    "success": true,
+    "at": "2026-03-26T19:09:51.829137"
+  },
+  {
+    "from": "50c5fd8873fc108f",
+    "action": "wait_for",
+    "to": "62cf4f17cba32a60",
+    "success": true,
+    "at": "2026-03-26T19:10:07.467690"
+  },
+  {
+    "from": "62cf4f17cba32a60",
+    "action": "scroll:down",
+    "to": "4cec0de91287da60",
+    "success": true,
+    "at": "2026-03-26T19:10:11.171733"
+  },
+  {
+    "from": "4cec0de91287da60",
+    "action": "scroll:down",
+    "to": "039ce40b07f2c6bf",
+    "success": true,
+    "at": "2026-03-26T19:10:14.525130"
+  }
+]

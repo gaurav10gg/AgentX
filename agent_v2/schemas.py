@@ -26,6 +26,7 @@ class ConstraintSet(BaseModel):
 
 
 class IntentResult(BaseModel):
+    raw_message: str = ""
     kind: IntentKind
     task: str
     app: Optional[str] = None
@@ -34,6 +35,9 @@ class IntentResult(BaseModel):
     requires_llm: bool = False
     time_context: Dict[str, Any] = Field(default_factory=dict)
     extracted_query: Optional[str] = None
+    confidence: float = 0.0
+    ambiguity_reasons: List[str] = Field(default_factory=list)
+    classification_source: Literal["heuristic", "llm"] = "heuristic"
 
 
 class RawUiNode(BaseModel):
@@ -133,6 +137,7 @@ class V2TaskState(BaseModel):
     history: List[Dict[str, Any]] = Field(default_factory=list)
     llm_calls: int = 0
     estimated_llm_tokens: int = 0
+    classifier_calls: int = 0
     recovery_attempts: int = 0
     last_error: Optional[str] = None
     created_at: Optional[str] = None

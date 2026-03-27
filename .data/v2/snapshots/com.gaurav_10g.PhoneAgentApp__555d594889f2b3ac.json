@@ -1,0 +1,318 @@
+{
+  "screen_id": "com.gaurav_10g.PhoneAgentApp::555d594889f2b3ac",
+  "app_package": "com.gaurav_10g.PhoneAgentApp",
+  "screen_signature": "555d594889f2b3ac",
+  "title": "PhoneAgentApp",
+  "html": "<button id=\"0.1.0\">&lt; Back</button>\n<node id=\"0.1.0.0\" role=\"text\">&lt; Back</node>\n<node id=\"0.1.1\" role=\"text\">Automation Lab</node>\n<button id=\"0.1.2\">Refresh</button>\n<node id=\"0.1.2.0\" role=\"text\">Refresh</node>\n<scroll id=\"0.1.3\" label=\"ScrollView\" />\n<node id=\"0.1.3.28\" role=\"text\">&lt;button id=&quot;0.1.0&quot;&gt;&amp;lt; Back&lt;/button&gt; &lt;node id=&quot;0.1.0.0&quot; role=&quot;text&quot;&gt;&amp;lt; Back&lt;/node&gt; &lt;node id=&quot;0.1.1&quot; role=&quot;text&quot;&gt;Automation Lab&lt;/node&gt; &lt;button id=&quot;0.1.2&quot;&gt;Refresh&lt;/button&gt; &lt;node id=&quot;0.1.2.0&quot; role=&quot;text&quot;&gt;Refresh&lt;/node&gt; &lt;scroll id=&quot;0.1.3&quot; label=&quot;ScrollView&quot; /&gt; &lt;node id=&quot;0.1.3.28&quot; role=&quot;text&quot;&gt;&amp;lt;button id=&amp;quot;0.1.0&amp;quot;&amp;gt;&amp;amp;lt; Back&amp;lt;/button&amp;gt; &amp;lt;node id=&amp;quot;0.1.0.0&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;&amp;amp;lt; Back&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.1&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Automation Lab&amp;lt;/node&amp;gt; &amp;lt;button id=&amp;quot;0.1.2&amp;quot;&amp;gt;Refresh&amp;lt;/button&amp;gt; &amp;lt;node id=&amp;quot;0.1.2.0&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Refresh&amp;lt;/node&amp;gt; &amp;lt;scroll id=&amp;quot;0.1.3&amp;quot; label=&amp;quot;ScrollView&amp;quot; /&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.14&amp;quot; role=&amp;quot;node&amp;quot;&amp;gt;Send Current Screen&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.15&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Manual Probes&amp;lt;/node&amp;gt; &amp;lt;button id=&amp;quot;0.1.3.16&amp;quot;&amp;gt;Capture Snapshot&amp;lt;/button&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.16.0&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Capture Snapshot&amp;lt;/node&amp;gt; &amp;lt;button id=&amp;quot;0.1.3.17&amp;quot;&amp;gt;Open Swiggy&amp;lt;/button&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.17.0&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Open Swiggy&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.18&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;undefined -&amp;amp;gt; undefined&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.19&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Current Task State&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.20&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Mode: ui_automation&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.21&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Status: active&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.22&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Current package: com.android.launcher&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.23&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Pending action: scroll&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.24&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Prepared next action: scroll.&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.25&amp;quot; role=&amp;quot;text&amp;quot;&amp;gt;Normalized Screen&amp;lt;/node&amp;gt; &amp;lt;node id=&amp;quot;0.1.3.26&amp;</node>\n<node id=\"0.1.3.29\" role=\"text\">Execution Trace</node>\n<node id=\"0.1.3.30\" role=\"text\">PLAN</node>\n<node id=\"0.1.3.31\" role=\"text\">Next action: scroll -&gt; 0.1.3</node>\n<node id=\"0.1.3.32\" role=\"text\">ASSISTANT</node>\n<node id=\"0.1.3.33\" role=\"text\">Prepared next action: scroll.</node>\n<node id=\"0.1.3.34\" role=\"text\">ACTION</node>\n<node id=\"0.1.3.35\" role=\"text\">scroll executed.</node>\n<node id=\"0.1.3.36\" role=\"text\">PLAN</node>\n<node id=\"0.1.3.37\" role=\"text\">Next action: scroll -&gt; 0.1.3</node>\n<node id=\"0.1.3.38\" role=\"text\">ASSISTANT</node>\n<node id=\"0.1.3.39\" role=\"text\">Prepared next action: scroll.</node>",
+  "elements": [
+    {
+      "id": "0.1.0",
+      "native_id": "0.1.0",
+      "role": "button",
+      "label": "< Back",
+      "text": null,
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": true,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.0",
+      "score": 2.5,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.0.0",
+      "native_id": "0.1.0.0",
+      "role": "text",
+      "label": "< Back",
+      "text": "< Back",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.0.0",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.1",
+      "native_id": "0.1.1",
+      "role": "text",
+      "label": "Automation Lab",
+      "text": "Automation Lab",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.1",
+      "score": 0.0,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.2",
+      "native_id": "0.1.2",
+      "role": "button",
+      "label": "Refresh",
+      "text": null,
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": true,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.2",
+      "score": 2.5,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.2.0",
+      "native_id": "0.1.2.0",
+      "role": "text",
+      "label": "Refresh",
+      "text": "Refresh",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.2.0",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3",
+      "native_id": "0.1.3",
+      "role": "scroll",
+      "label": "ScrollView",
+      "text": null,
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": true,
+      "path": "0.1.3",
+      "score": 0.0,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.3.28",
+      "native_id": "0.1.3.28",
+      "role": "text",
+      "label": "<button id=\"0.1.0\">&lt; Back</button> <node id=\"0.1.0.0\" role=\"text\">&lt; Back</node> <node id=\"0.1.1\" role=\"text\">Automation Lab</node> <button id=\"0.1.2\">Refresh</button> <node id=\"0.1.2.0\" role=\"text\">Refresh</node> <scroll id=\"0.1.3\" label=\"ScrollView\" /> <node id=\"0.1.3.28\" role=\"text\">&lt;button id=&quot;0.1.0&quot;&gt;&amp;lt; Back&lt;/button&gt; &lt;node id=&quot;0.1.0.0&quot; role=&quot;text&quot;&gt;&amp;lt; Back&lt;/node&gt; &lt;node id=&quot;0.1.1&quot; role=&quot;text&quot;&gt;Automation Lab&lt;/node&gt; &lt;button id=&quot;0.1.2&quot;&gt;Refresh&lt;/button&gt; &lt;node id=&quot;0.1.2.0&quot; role=&quot;text&quot;&gt;Refresh&lt;/node&gt; &lt;scroll id=&quot;0.1.3&quot; label=&quot;ScrollView&quot; /&gt; &lt;node id=&quot;0.1.3.14&quot; role=&quot;node&quot;&gt;Send Current Screen&lt;/node&gt; &lt;node id=&quot;0.1.3.15&quot; role=&quot;text&quot;&gt;Manual Probes&lt;/node&gt; &lt;button id=&quot;0.1.3.16&quot;&gt;Capture Snapshot&lt;/button&gt; &lt;node id=&quot;0.1.3.16.0&quot; role=&quot;text&quot;&gt;Capture Snapshot&lt;/node&gt; &lt;button id=&quot;0.1.3.17&quot;&gt;Open Swiggy&lt;/button&gt; &lt;node id=&quot;0.1.3.17.0&quot; role=&quot;text&quot;&gt;Open Swiggy&lt;/node&gt; &lt;node id=&quot;0.1.3.18&quot; role=&quot;text&quot;&gt;undefined -&amp;gt; undefined&lt;/node&gt; &lt;node id=&quot;0.1.3.19&quot; role=&quot;text&quot;&gt;Current Task State&lt;/node&gt; &lt;node id=&quot;0.1.3.20&quot; role=&quot;text&quot;&gt;Mode: ui_automation&lt;/node&gt; &lt;node id=&quot;0.1.3.21&quot; role=&quot;text&quot;&gt;Status: active&lt;/node&gt; &lt;node id=&quot;0.1.3.22&quot; role=&quot;text&quot;&gt;Current package: com.android.launcher&lt;/node&gt; &lt;node id=&quot;0.1.3.23&quot; role=&quot;text&quot;&gt;Pending action: scroll&lt;/node&gt; &lt;node id=&quot;0.1.3.24&quot; role=&quot;text&quot;&gt;Prepared next action: scroll.&lt;/node&gt; &lt;node id=&quot;0.1.3.25&quot; role=&quot;text&quot;&gt;Normalized Screen&lt;/node&gt; &lt;node id=&quot;0.1.3.26&",
+      "text": "<button id=\"0.1.0\">&lt; Back</button>\n<node id=\"0.1.0.0\" role=\"text\">&lt; Back</node>\n<node id=\"0.1.1\" role=\"text\">Automation Lab</node>\n<button id=\"0.1.2\">Refresh</button>\n<node id=\"0.1.2.0\" role=\"text\">Refresh</node>\n<scroll id=\"0.1.3\" label=\"ScrollView\" />\n<node id=\"0.1.3.28\" role=\"text\">&lt;button id=&quot;0.1.0&quot;&gt;&amp;lt; Back&lt;/button&gt; &lt;node id=&quot;0.1.0.0&quot; role=&quot;text&quot;&gt;&amp;lt; Back&lt;/node&gt; &lt;node id=&quot;0.1.1&quot; role=&quot;text&quot;&gt;Automation Lab&lt;/node&gt; &lt;button id=&quot;0.1.2&quot;&gt;Refresh&lt;/button&gt; &lt;node id=&quot;0.1.2.0&quot; role=&quot;text&quot;&gt;Refresh&lt;/node&gt; &lt;scroll id=&quot;0.1.3&quot; label=&quot;ScrollView&quot; /&gt; &lt;node id=&quot;0.1.3.14&quot; role=&quot;node&quot;&gt;Send Current Screen&lt;/node&gt; &lt;node id=&quot;0.1.3.15&quot; role=&quot;text&quot;&gt;Manual Probes&lt;/node&gt; &lt;button id=&quot;0.1.3.16&quot;&gt;Capture Snapshot&lt;/button&gt; &lt;node id=&quot;0.1.3.16.0&quot; role=&quot;text&quot;&gt;Capture Snapshot&lt;/node&gt; &lt;button id=&quot;0.1.3.17&quot;&gt;Open Swiggy&lt;/button&gt; &lt;node id=&quot;0.1.3.17.0&quot; role=&quot;text&quot;&gt;Open Swiggy&lt;/node&gt; &lt;node id=&quot;0.1.3.18&quot; role=&quot;text&quot;&gt;undefined -&amp;gt; undefined&lt;/node&gt; &lt;node id=&quot;0.1.3.19&quot; role=&quot;text&quot;&gt;Current Task State&lt;/node&gt; &lt;node id=&quot;0.1.3.20&quot; role=&quot;text&quot;&gt;Mode: ui_automation&lt;/node&gt; &lt;node id=&quot;0.1.3.21&quot; role=&quot;text&quot;&gt;Status: active&lt;/node&gt; &lt;node id=&quot;0.1.3.22&quot; role=&quot;text&quot;&gt;Current package: com.android.launcher&lt;/node&gt; &lt;node id=&quot;0.1.3.23&quot; role=&quot;text&quot;&gt;Pending action: scroll&lt;/node&gt; &lt;node id=&quot;0.1.3.24&quot; role=&quot;text&quot;&gt;Prepared next action: scroll.&lt;/node&gt; &lt;node id=&quot;0.1.3.25&quot; role=&quot;text&quot;&gt;Normalized Screen&lt;/node&gt; &lt;node id=&quot;0.1.3.26&",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.28",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.29",
+      "native_id": "0.1.3.29",
+      "role": "text",
+      "label": "Execution Trace",
+      "text": "Execution Trace",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.29",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.30",
+      "native_id": "0.1.3.30",
+      "role": "text",
+      "label": "PLAN",
+      "text": "PLAN",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.30",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.31",
+      "native_id": "0.1.3.31",
+      "role": "text",
+      "label": "Next action: scroll -> 0.1.3",
+      "text": "Next action: scroll -> 0.1.3",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.31",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.32",
+      "native_id": "0.1.3.32",
+      "role": "text",
+      "label": "ASSISTANT",
+      "text": "ASSISTANT",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.32",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.33",
+      "native_id": "0.1.3.33",
+      "role": "text",
+      "label": "Prepared next action: scroll.",
+      "text": "Prepared next action: scroll.",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.33",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.34",
+      "native_id": "0.1.3.34",
+      "role": "text",
+      "label": "ACTION",
+      "text": "ACTION",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.34",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.35",
+      "native_id": "0.1.3.35",
+      "role": "text",
+      "label": "scroll executed.",
+      "text": "scroll executed.",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.35",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.36",
+      "native_id": "0.1.3.36",
+      "role": "text",
+      "label": "PLAN",
+      "text": "PLAN",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.36",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.37",
+      "native_id": "0.1.3.37",
+      "role": "text",
+      "label": "Next action: scroll -> 0.1.3",
+      "text": "Next action: scroll -> 0.1.3",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.37",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.38",
+      "native_id": "0.1.3.38",
+      "role": "text",
+      "label": "ASSISTANT",
+      "text": "ASSISTANT",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.38",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.39",
+      "native_id": "0.1.3.39",
+      "role": "text",
+      "label": "Prepared next action: scroll.",
+      "text": "Prepared next action: scroll.",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.39",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    }
+  ],
+  "anchors": [],
+  "candidates": [],
+  "metadata": {}
+}

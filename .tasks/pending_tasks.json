@@ -48,5 +48,22 @@
     "result": "Alarm set for 1:24 PM | label: Drink water reminder",
     "created_at": "2026-03-25T13:23:15.761984",
     "completed_at": "2026-03-25T13:27:55.632369"
+  },
+  {
+    "task_id": "b5abcc73",
+    "session_id": "test_v1",
+    "user_id": "default_user",
+    "tool_name": "set_alarm",
+    "tool_args": {
+      "hour": 18,
+      "minute": 37,
+      "label": "Drink water reminder"
+    },
+    "execute_at": "2026-03-26T18:37:05.754930",
+    "description": "Drink water reminder",
+    "status": "done",
+    "result": "Alarm set for 6:37 PM | label: Drink water reminder",
+    "created_at": "2026-03-26T18:36:10.149533",
+    "completed_at": "2026-03-26T18:37:07.568577"
   }
 ]

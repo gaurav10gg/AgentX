@@ -10,7 +10,12 @@ from providers.index import get_provider
 
 from .app_registry import resolve_app
 from .decision import decide_next_action
-from .intent import classify_intent, refine_intent_with_llm
+from .intent import (
+    classify_intent,
+    refine_intent_with_llm,
+    should_reclassify_on_context_change,
+    should_use_llm_classifier,
+)
 from .memory_store import (
     get_task_flow,
     list_task_states,
@@ -35,7 +40,6 @@ from .schemas import (
 
 async def handle_chat(req: V2ChatRequest) -> V2ChatResponse:
     intent = classify_intent(req.message)
-    intent = await refine_intent_with_llm(intent, req.message, req.provider, req.api_key, req.model, req.base_url)
     existing = _load_state_model(req.session_id)
     now = datetime.utcnow().isoformat()
 
@@ -46,7 +50,13 @@ async def handle_chat(req: V2ChatRequest) -> V2ChatResponse:
         created_at=now,
         updated_at=now,
     )
+    previous_message = task_state.message
     task_state.message = req.message
+    task_state.classifier_calls = 0 if previous_message != req.message else task_state.classifier_calls
+    if should_use_llm_classifier(intent):
+        intent = await refine_intent_with_llm(intent, req.message, req.provider, req.api_key, req.model, req.base_url)
+        if intent.classification_source == "llm":
+            task_state.classifier_calls += 1
     task_state.intent = intent
     task_state.device_id = req.device_id
     task_state.user_id = req.user_id
@@ -75,6 +85,15 @@ async def handle_chat(req: V2ChatRequest) -> V2ChatResponse:
         return V2ChatResponse(mode=task_state.mode, reply=task_state.reply, task_state=task_state)
 
     if not task_state.latest_observation:
+        if "llm_hallucinated_package" in intent.ambiguity_reasons:
+            task_state.status = "awaiting_user"
+            task_state.pending_action = None
+            task_state.reply = (
+                "I could not safely map the app to a supported package. "
+                "Please name the target app exactly (for example: Swiggy, WhatsApp, Settings)."
+            )
+            _persist_state(task_state)
+            return V2ChatResponse(mode=task_state.mode, reply=task_state.reply, task_state=task_state)
         app = resolve_app(intent.app) if intent.app else None
         package_name = intent.target_package or (str(app["package"]) if app else None)
         if not package_name:
@@ -161,6 +180,43 @@ async def handle_observation(
             "anchors": normalized.anchors,
         }
     )
+    task_state.history = task_state.history[-50:]
+
+    if task_state.intent and should_reclassify_on_context_change(task_state.intent, observation.foreground_app):
+        if task_state.classifier_calls < settings.v2_max_classifier_calls_per_task:
+            refreshed = classify_intent(task_state.message)
+            if should_use_llm_classifier(refreshed):
+                refreshed = await refine_intent_with_llm(
+                    refreshed,
+                    task_state.message,
+                    provider,
+                    api_key,
+                    model,
+                    base_url,
+                )
+                if refreshed.classification_source == "llm":
+                    task_state.classifier_calls += 1
+            task_state.intent = refreshed
+            task_state.current_app = refreshed.app or task_state.current_app
+            task_state.current_package = refreshed.target_package or task_state.current_package
+            task_state.history.append(
+                {
+                    "at": task_state.updated_at,
+                    "type": "context_reclassification",
+                    "foreground_app": observation.foreground_app,
+                    "new_target_package": task_state.current_package,
+                    "source": refreshed.classification_source,
+                }
+            )
+        else:
+            task_state.history.append(
+                {
+                    "at": task_state.updated_at,
+                    "type": "context_reclassification_skipped",
+                    "reason": "classifier_budget_reached",
+                    "foreground_app": observation.foreground_app,
+                }
+            )
     task_state.history = task_state.history[-50:]
 
     reply = "Observation received."
@@ -289,7 +345,14 @@ async def _decide_from_screen(task_state: V2TaskState, req: V2ChatRequest) -> V2
     task_state.pending_action = next_action
     task_state.reply = explanation or _default_reply(task_state, next_action, memory_note)
     if next_action is None:
-        task_state.status = "idle"
+        if task_state.intent and "llm_hallucinated_package" in task_state.intent.ambiguity_reasons:
+            task_state.status = "awaiting_user"
+            task_state.reply = (
+                "I couldn't verify the app package from the model output. "
+                "Please confirm the app name so I can continue safely."
+            )
+        else:
+            task_state.status = "idle"
     elif next_action.action == "complete":
         task_state.status = "completed"
     elif next_action.action == "ask_user":

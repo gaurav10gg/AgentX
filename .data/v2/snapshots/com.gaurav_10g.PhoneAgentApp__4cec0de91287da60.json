@@ -1,0 +1,131 @@
+{
+  "screen_id": "com.gaurav_10g.PhoneAgentApp::4cec0de91287da60",
+  "app_package": "com.gaurav_10g.PhoneAgentApp",
+  "screen_signature": "4cec0de91287da60",
+  "title": "PhoneAgentApp",
+  "html": "<button id=\"0.1.0\">&lt; Back</button>\n<node id=\"0.1.0.0\" role=\"text\">&lt; Back</node>\n<node id=\"0.1.1\" role=\"text\">Automation Lab</node>\n<button id=\"0.1.2\">Refresh</button>\n<node id=\"0.1.2.0\" role=\"text\">Refresh</node>\n<scroll id=\"0.1.3\" label=\"ScrollView\" />\n<node id=\"0.1.3.28\" role=\"text\">&lt;button id=&quot;0.1.0&quot;&gt;&amp;lt; Back&lt;/button&gt; &lt;node id=&quot;0.1.0.0&quot; role=&quot;text&quot;&gt;&amp;lt; Back&lt;/node&gt; &lt;node id=&quot;0.1.1&quot; role=&quot;text&quot;&gt;Automation Lab&lt;/node&gt; &lt;button id=&quot;0.1.2&quot;&gt;Refresh&lt;/button&gt; &lt;node id=&quot;0.1.2.0&quot; role=&quot;text&quot;&gt;Refresh&lt;/node&gt; &lt;scroll id=&quot;0.1.3&quot; label=&quot;ScrollView&quot; /&gt; &lt;node id=&quot;0.1.3.40&quot; role=&quot;text&quot;&gt;ACTION&lt;/node&gt; &lt;node id=&quot;0.1.3.41&quot; role=&quot;text&quot;&gt;scroll executed.&lt;/node&gt; &lt;node id=&quot;0.1.3.42&quot; role=&quot;text&quot;&gt;PLAN&lt;/node&gt; &lt;node id=&quot;0.1.3.43&quot; role=&quot;text&quot;&gt;Next action: scroll -&amp;gt; 0.1.3&lt;/node&gt; &lt;node id=&quot;0.1.3.44&quot; role=&quot;text&quot;&gt;ASSISTANT&lt;/node&gt; &lt;node id=&quot;0.1.3.45&quot; role=&quot;text&quot;&gt;Prepared next action: scroll.&lt;/node&gt; &lt;node id=&quot;0.1.3.46&quot; role=&quot;text&quot;&gt;ACTION&lt;/node&gt; &lt;node id=&quot;0.1.3.47&quot; role=&quot;text&quot;&gt;scroll executed.&lt;/node&gt; &lt;node id=&quot;0.1.3.48&quot; role=&quot;text&quot;&gt;PLAN&lt;/node&gt; &lt;node id=&quot;0.1.3.49&quot; role=&quot;text&quot;&gt;Next action: scroll -&amp;gt; 0.1.3&lt;/node&gt; &lt;node id=&quot;0.1.3.50&quot; role=&quot;text&quot;&gt;ASSISTANT&lt;/node&gt; &lt;node id=&quot;0.1.3.51&quot; role=&quot;text&quot;&gt;Prepared next action: scroll.&lt;/node&gt; &lt;node id=&quot;0.1.3.52&quot; role=&quot;text&quot;&gt;ACTION&lt;/node&gt; &lt;node id=&quot;0.1.3.53&quot; role=&quot;text&quot;&gt;scroll executed.&lt;/node&gt; &lt;node id=&quot;0.1.3.54&quot; role=&quot;text&quot;&gt;PLAN&lt;/node&gt; &lt;node id=&quot;0.1.3.55&quot; role=&quot;text&quot;&gt;Next action: scroll -&amp;gt; 0.1.3&lt;/node&gt; &lt;node id=&quot;0.1.3.56&quot; role=&quot;text&quot;&gt;ASSISTANT&lt;/node&gt; &lt;node id=&quot;0.1.3.57&quot; role=&quot;text&quot;&gt;Prepared next action: scroll.&lt;/node&gt; &lt;node id=&quot;0.1.3.58&quot; role=&quot;text&quot;&gt;ACTION&lt;/node&gt; &lt;node id=&quot;0.1.3.59&quot; role=&quot;text&quot;&gt;Opened in.swiggy.android&lt;/node&gt; &lt;node id=&quot;0.1.3.60&quot; role=&quot;text&quot;&gt;PLAN&lt;/node&gt; &lt;node id=&quot;0.1.3.61&quot; role=&quot;text&quot;&gt;Next action: open_app&lt;/node&gt; &lt;node id=&quot;0.1.3.62&quot; role=&quot;text&quot;&gt;ASSISTANT&lt;/node&gt; &lt;node id=&quot;0.1.3.63&quot; role=&quot;text&quot;&gt;Starting V2 automation for Swiggy. Open the app on device and send the first observation.&lt;/node&gt; &lt;node id=&quot;0.1.3.64&quot; role=&quot;text&quot;&gt;USER&lt;/node&gt; &lt;node id=&quot;0.1.3.65&quot; role=&quot;text&quot;&gt;Open Swiggy&lt;/node&gt;</node>",
+  "elements": [
+    {
+      "id": "0.1.0",
+      "native_id": "0.1.0",
+      "role": "button",
+      "label": "< Back",
+      "text": null,
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": true,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.0",
+      "score": 2.5,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.0.0",
+      "native_id": "0.1.0.0",
+      "role": "text",
+      "label": "< Back",
+      "text": "< Back",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.0.0",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.1",
+      "native_id": "0.1.1",
+      "role": "text",
+      "label": "Automation Lab",
+      "text": "Automation Lab",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.1",
+      "score": 0.0,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.2",
+      "native_id": "0.1.2",
+      "role": "button",
+      "label": "Refresh",
+      "text": null,
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": true,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.2",
+      "score": 2.5,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.2.0",
+      "native_id": "0.1.2.0",
+      "role": "text",
+      "label": "Refresh",
+      "text": "Refresh",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.2.0",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3",
+      "native_id": "0.1.3",
+      "role": "scroll",
+      "label": "ScrollView",
+      "text": null,
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": true,
+      "path": "0.1.3",
+      "score": 0.0,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.3.28",
+      "native_id": "0.1.3.28",
+      "role": "text",
+      "label": "<button id=\"0.1.0\">&lt; Back</button> <node id=\"0.1.0.0\" role=\"text\">&lt; Back</node> <node id=\"0.1.1\" role=\"text\">Automation Lab</node> <button id=\"0.1.2\">Refresh</button> <node id=\"0.1.2.0\" role=\"text\">Refresh</node> <scroll id=\"0.1.3\" label=\"ScrollView\" /> <node id=\"0.1.3.40\" role=\"text\">ACTION</node> <node id=\"0.1.3.41\" role=\"text\">scroll executed.</node> <node id=\"0.1.3.42\" role=\"text\">PLAN</node> <node id=\"0.1.3.43\" role=\"text\">Next action: scroll -&gt; 0.1.3</node> <node id=\"0.1.3.44\" role=\"text\">ASSISTANT</node> <node id=\"0.1.3.45\" role=\"text\">Prepared next action: scroll.</node> <node id=\"0.1.3.46\" role=\"text\">ACTION</node> <node id=\"0.1.3.47\" role=\"text\">scroll executed.</node> <node id=\"0.1.3.48\" role=\"text\">PLAN</node> <node id=\"0.1.3.49\" role=\"text\">Next action: scroll -&gt; 0.1.3</node> <node id=\"0.1.3.50\" role=\"text\">ASSISTANT</node> <node id=\"0.1.3.51\" role=\"text\">Prepared next action: scroll.</node> <node id=\"0.1.3.52\" role=\"text\">ACTION</node> <node id=\"0.1.3.53\" role=\"text\">scroll executed.</node> <node id=\"0.1.3.54\" role=\"text\">PLAN</node> <node id=\"0.1.3.55\" role=\"text\">Next action: scroll -&gt; 0.1.3</node> <node id=\"0.1.3.56\" role=\"text\">ASSISTANT</node> <node id=\"0.1.3.57\" role=\"text\">Prepared next action: scroll.</node> <node id=\"0.1.3.58\" role=\"text\">ACTION</node> <node id=\"0.1.3.59\" role=\"text\">Opened in.swiggy.android</node> <node id=\"0.1.3.60\" role=\"text\">PLAN</node> <node id=\"0.1.3.61\" role=\"text\">Next action: open_app</node> <node id=\"0.1.3.62\" role=\"text\">ASSISTANT</node> <node id=\"0.1.3.63\" role=\"text\">Starting V2 automation for Swiggy. Open the app on device and send the first observation.</node> <node id=\"0.1.3.64\" role=\"text\">USER</node> <node id=\"0.1.3.65\" role=\"text\">Open Swiggy</node>",
+      "text": "<button id=\"0.1.0\">&lt; Back</button>\n<node id=\"0.1.0.0\" role=\"text\">&lt; Back</node>\n<node id=\"0.1.1\" role=\"text\">Automation Lab</node>\n<button id=\"0.1.2\">Refresh</button>\n<node id=\"0.1.2.0\" role=\"text\">Refresh</node>\n<scroll id=\"0.1.3\" label=\"ScrollView\" />\n<node id=\"0.1.3.40\" role=\"text\">ACTION</node>\n<node id=\"0.1.3.41\" role=\"text\">scroll executed.</node>\n<node id=\"0.1.3.42\" role=\"text\">PLAN</node>\n<node id=\"0.1.3.43\" role=\"text\">Next action: scroll -&gt; 0.1.3</node>\n<node id=\"0.1.3.44\" role=\"text\">ASSISTANT</node>\n<node id=\"0.1.3.45\" role=\"text\">Prepared next action: scroll.</node>\n<node id=\"0.1.3.46\" role=\"text\">ACTION</node>\n<node id=\"0.1.3.47\" role=\"text\">scroll executed.</node>\n<node id=\"0.1.3.48\" role=\"text\">PLAN</node>\n<node id=\"0.1.3.49\" role=\"text\">Next action: scroll -&gt; 0.1.3</node>\n<node id=\"0.1.3.50\" role=\"text\">ASSISTANT</node>\n<node id=\"0.1.3.51\" role=\"text\">Prepared next action: scroll.</node>\n<node id=\"0.1.3.52\" role=\"text\">ACTION</node>\n<node id=\"0.1.3.53\" role=\"text\">scroll executed.</node>\n<node id=\"0.1.3.54\" role=\"text\">PLAN</node>\n<node id=\"0.1.3.55\" role=\"text\">Next action: scroll -&gt; 0.1.3</node>\n<node id=\"0.1.3.56\" role=\"text\">ASSISTANT</node>\n<node id=\"0.1.3.57\" role=\"text\">Prepared next action: scroll.</node>\n<node id=\"0.1.3.58\" role=\"text\">ACTION</node>\n<node id=\"0.1.3.59\" role=\"text\">Opened in.swiggy.android</node>\n<node id=\"0.1.3.60\" role=\"text\">PLAN</node>\n<node id=\"0.1.3.61\" role=\"text\">Next action: open_app</node>\n<node id=\"0.1.3.62\" role=\"text\">ASSISTANT</node>\n<node id=\"0.1.3.63\" role=\"text\">Starting V2 automation for Swiggy. Open the app on device and send the first observation.</node>\n<node id=\"0.1.3.64\" role=\"text\">USER</node>\n<node id=\"0.1.3.65\" role=\"text\">Open Swiggy</node>",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.28",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    }
+  ],
+  "anchors": [],
+  "candidates": [],
+  "metadata": {}
+}

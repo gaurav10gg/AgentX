@@ -1,0 +1,556 @@
+{
+  "screen_id": "com.gaurav_10g.PhoneAgentApp::62cf4f17cba32a60",
+  "app_package": "com.gaurav_10g.PhoneAgentApp",
+  "screen_signature": "62cf4f17cba32a60",
+  "title": "PhoneAgentApp",
+  "html": "<button id=\"0.1.0\">&lt; Back</button>\n<node id=\"0.1.0.0\" role=\"text\">&lt; Back</node>\n<node id=\"0.1.1\" role=\"text\">Automation Lab</node>\n<button id=\"0.1.2\">Refresh</button>\n<node id=\"0.1.2.0\" role=\"text\">Refresh</node>\n<scroll id=\"0.1.3\" label=\"ScrollView\" />\n<node id=\"0.1.3.40\" role=\"text\">ACTION</node>\n<node id=\"0.1.3.41\" role=\"text\">scroll executed.</node>\n<node id=\"0.1.3.42\" role=\"text\">PLAN</node>\n<node id=\"0.1.3.43\" role=\"text\">Next action: scroll -&gt; 0.1.3</node>\n<node id=\"0.1.3.44\" role=\"text\">ASSISTANT</node>\n<node id=\"0.1.3.45\" role=\"text\">Prepared next action: scroll.</node>\n<node id=\"0.1.3.46\" role=\"text\">ACTION</node>\n<node id=\"0.1.3.47\" role=\"text\">scroll executed.</node>\n<node id=\"0.1.3.48\" role=\"text\">PLAN</node>\n<node id=\"0.1.3.49\" role=\"text\">Next action: scroll -&gt; 0.1.3</node>\n<node id=\"0.1.3.50\" role=\"text\">ASSISTANT</node>\n<node id=\"0.1.3.51\" role=\"text\">Prepared next action: scroll.</node>\n<node id=\"0.1.3.52\" role=\"text\">ACTION</node>\n<node id=\"0.1.3.53\" role=\"text\">scroll executed.</node>\n<node id=\"0.1.3.54\" role=\"text\">PLAN</node>\n<node id=\"0.1.3.55\" role=\"text\">Next action: scroll -&gt; 0.1.3</node>\n<node id=\"0.1.3.56\" role=\"text\">ASSISTANT</node>\n<node id=\"0.1.3.57\" role=\"text\">Prepared next action: scroll.</node>\n<node id=\"0.1.3.58\" role=\"text\">ACTION</node>\n<node id=\"0.1.3.59\" role=\"text\">Opened in.swiggy.android</node>\n<node id=\"0.1.3.60\" role=\"text\">PLAN</node>\n<node id=\"0.1.3.61\" role=\"text\">Next action: open_app</node>\n<node id=\"0.1.3.62\" role=\"text\">ASSISTANT</node>\n<node id=\"0.1.3.63\" role=\"text\">Starting V2 automation for Swiggy. Open the app on device and send the first observation.</node>\n<node id=\"0.1.3.64\" role=\"text\">USER</node>\n<node id=\"0.1.3.65\" role=\"text\">Open Swiggy</node>",
+  "elements": [
+    {
+      "id": "0.1.0",
+      "native_id": "0.1.0",
+      "role": "button",
+      "label": "< Back",
+      "text": null,
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": true,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.0",
+      "score": 2.5,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.0.0",
+      "native_id": "0.1.0.0",
+      "role": "text",
+      "label": "< Back",
+      "text": "< Back",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.0.0",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.1",
+      "native_id": "0.1.1",
+      "role": "text",
+      "label": "Automation Lab",
+      "text": "Automation Lab",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.1",
+      "score": 0.0,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.2",
+      "native_id": "0.1.2",
+      "role": "button",
+      "label": "Refresh",
+      "text": null,
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": true,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.2",
+      "score": 2.5,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.2.0",
+      "native_id": "0.1.2.0",
+      "role": "text",
+      "label": "Refresh",
+      "text": "Refresh",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.2.0",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3",
+      "native_id": "0.1.3",
+      "role": "scroll",
+      "label": "ScrollView",
+      "text": null,
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": true,
+      "path": "0.1.3",
+      "score": 0.0,
+      "meta": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "0.1.3.40",
+      "native_id": "0.1.3.40",
+      "role": "text",
+      "label": "ACTION",
+      "text": "ACTION",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.40",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.41",
+      "native_id": "0.1.3.41",
+      "role": "text",
+      "label": "scroll executed.",
+      "text": "scroll executed.",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.41",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.42",
+      "native_id": "0.1.3.42",
+      "role": "text",
+      "label": "PLAN",
+      "text": "PLAN",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.42",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.43",
+      "native_id": "0.1.3.43",
+      "role": "text",
+      "label": "Next action: scroll -> 0.1.3",
+      "text": "Next action: scroll -> 0.1.3",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.43",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.44",
+      "native_id": "0.1.3.44",
+      "role": "text",
+      "label": "ASSISTANT",
+      "text": "ASSISTANT",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.44",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.45",
+      "native_id": "0.1.3.45",
+      "role": "text",
+      "label": "Prepared next action: scroll.",
+      "text": "Prepared next action: scroll.",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.45",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.46",
+      "native_id": "0.1.3.46",
+      "role": "text",
+      "label": "ACTION",
+      "text": "ACTION",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.46",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.47",
+      "native_id": "0.1.3.47",
+      "role": "text",
+      "label": "scroll executed.",
+      "text": "scroll executed.",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.47",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.48",
+      "native_id": "0.1.3.48",
+      "role": "text",
+      "label": "PLAN",
+      "text": "PLAN",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.48",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.49",
+      "native_id": "0.1.3.49",
+      "role": "text",
+      "label": "Next action: scroll -> 0.1.3",
+      "text": "Next action: scroll -> 0.1.3",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.49",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.50",
+      "native_id": "0.1.3.50",
+      "role": "text",
+      "label": "ASSISTANT",
+      "text": "ASSISTANT",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.50",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.51",
+      "native_id": "0.1.3.51",
+      "role": "text",
+      "label": "Prepared next action: scroll.",
+      "text": "Prepared next action: scroll.",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.51",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.52",
+      "native_id": "0.1.3.52",
+      "role": "text",
+      "label": "ACTION",
+      "text": "ACTION",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.52",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.53",
+      "native_id": "0.1.3.53",
+      "role": "text",
+      "label": "scroll executed.",
+      "text": "scroll executed.",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.53",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.54",
+      "native_id": "0.1.3.54",
+      "role": "text",
+      "label": "PLAN",
+      "text": "PLAN",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.54",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.55",
+      "native_id": "0.1.3.55",
+      "role": "text",
+      "label": "Next action: scroll -> 0.1.3",
+      "text": "Next action: scroll -> 0.1.3",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.55",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.56",
+      "native_id": "0.1.3.56",
+      "role": "text",
+      "label": "ASSISTANT",
+      "text": "ASSISTANT",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.56",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.57",
+      "native_id": "0.1.3.57",
+      "role": "text",
+      "label": "Prepared next action: scroll.",
+      "text": "Prepared next action: scroll.",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.57",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.58",
+      "native_id": "0.1.3.58",
+      "role": "text",
+      "label": "ACTION",
+      "text": "ACTION",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.58",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.59",
+      "native_id": "0.1.3.59",
+      "role": "text",
+      "label": "Opened in.swiggy.android",
+      "text": "Opened in.swiggy.android",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.59",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.60",
+      "native_id": "0.1.3.60",
+      "role": "text",
+      "label": "PLAN",
+      "text": "PLAN",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.60",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.61",
+      "native_id": "0.1.3.61",
+      "role": "text",
+      "label": "Next action: open_app",
+      "text": "Next action: open_app",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.61",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.62",
+      "native_id": "0.1.3.62",
+      "role": "text",
+      "label": "ASSISTANT",
+      "text": "ASSISTANT",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.62",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.63",
+      "native_id": "0.1.3.63",
+      "role": "text",
+      "label": "Starting V2 automation for Swiggy. Open the app on device and send the first observation.",
+      "text": "Starting V2 automation for Swiggy. Open the app on device and send the first observation.",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.63",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.64",
+      "native_id": "0.1.3.64",
+      "role": "text",
+      "label": "USER",
+      "text": "USER",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.64",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    },
+    {
+      "id": "0.1.3.65",
+      "native_id": "0.1.3.65",
+      "role": "text",
+      "label": "Open Swiggy",
+      "text": "Open Swiggy",
+      "package_name": "com.gaurav_10g.PhoneAgentApp",
+      "resource_id": null,
+      "clickable": false,
+      "editable": false,
+      "scrollable": false,
+      "path": "0.1.3.65",
+      "score": 0.0,
+      "meta": {
+        "depth": 3
+      }
+    }
+  ],
+  "anchors": [],
+  "candidates": [],
+  "metadata": {}
+}
