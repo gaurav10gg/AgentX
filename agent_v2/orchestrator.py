@@ -40,8 +40,8 @@ from .schemas import (
 
 async def handle_chat(req: V2ChatRequest) -> V2ChatResponse:
     existing = _load_state_model(req.session_id)
-    if existing and _is_checkout_confirmation(existing, req.message):
-        return _resume_checkout_after_confirmation(existing, req)
+    if existing and _is_action_confirmation(existing, req.message):
+        return _resume_action_after_confirmation(existing, req)
 
     intent = classify_intent(req.message)
     now = datetime.utcnow().isoformat()
@@ -153,6 +153,7 @@ async def handle_observation(
     save_snapshot(normalized.screen_id, normalized.model_dump())
 
     previous_signature = task_state.latest_screen.screen_signature if task_state.latest_screen else None
+    previous_structural = task_state.latest_screen.structural_signature if task_state.latest_screen else None
     if previous_signature and task_state.pending_action:
         remember_navigation(
             app_package=normalized.app_package or task_state.current_package or "unknown",
@@ -183,13 +184,28 @@ async def handle_observation(
             "type": "observation",
             "foreground_app": observation.foreground_app,
             "screen_signature": normalized.screen_signature,
+            "structural_signature": normalized.structural_signature,
             "anchors": normalized.anchors,
         }
     )
     task_state.history = task_state.history[-50:]
 
-    if was_scroll_action and previous_signature:
-        task_state.stagnant_scrolls = task_state.stagnant_scrolls + 1 if previous_signature == normalized.screen_signature else 0
+    if executed_action and executed_action.action == "request_observation":
+        task_state.history.append(
+            {
+                "at": task_state.updated_at,
+                "type": "observation_refresh",
+                "reason_code": executed_action.reason_code,
+                "screen_signature": normalized.screen_signature,
+            }
+        )
+        task_state.history = task_state.history[-50:]
+
+    if was_scroll_action:
+        if previous_structural and previous_structural == normalized.structural_signature:
+            task_state.stagnant_scrolls += 1
+        else:
+            task_state.stagnant_scrolls = 0
     elif not was_scroll_action:
         task_state.stagnant_scrolls = 0
 
@@ -339,6 +355,26 @@ def get_tasks(session_id: Optional[str] = None):
     return filtered
 
 
+def cancel_task(session_id: str, reason: str = "user_cancelled") -> Optional[V2TaskState]:
+    task_state = _load_state_model(session_id)
+    if not task_state:
+        return None
+    task_state.status = "cancelled"
+    task_state.pending_action = None
+    task_state.reply = "Automation stopped."
+    task_state.updated_at = datetime.utcnow().isoformat()
+    task_state.history.append(
+        {
+            "at": task_state.updated_at,
+            "type": "task_cancelled",
+            "reason": reason,
+        }
+    )
+    task_state.history = task_state.history[-50:]
+    _persist_state(task_state)
+    return task_state
+
+
 async def _decide_from_screen(task_state: V2TaskState, req: V2ChatRequest) -> V2ChatResponse:
     screen = task_state.latest_screen
     if not task_state.intent or not screen:
@@ -354,7 +390,7 @@ async def _decide_from_screen(task_state: V2TaskState, req: V2ChatRequest) -> V2
         if llm_action is not None:
             next_action = llm_action
 
-    if next_action and next_action.action == "scroll" and task_state.stagnant_scrolls >= 2:
+    if next_action and next_action.action == "scroll" and task_state.stagnant_scrolls >= 3:
         next_action = AgentAction(
             id=f"act_{uuid4().hex[:8]}",
             action="ask_user",
@@ -410,7 +446,7 @@ async def _ask_llm_for_action(task_state: V2TaskState, req: V2ChatRequest) -> Op
     system_prompt = (
         "You are AgentX V2. Return only valid JSON with keys: "
         "id, action, element_id, input_text, package_name, direction, timeout_ms, reason_code. "
-        "Choose one action from: open_app, tap_element, type_text, scroll, press_back, press_home, wait_for, complete."
+        "Choose one action from: open_app, tap_element, type_text, scroll, press_back, press_home, request_observation, wait_for, complete."
     )
     user_prompt = {
         "task": task_state.message,
@@ -488,6 +524,8 @@ def _should_use_llm(task_state: V2TaskState, next_action: Optional[AgentAction])
         return True
     if task_state.recovery_attempts > 0:
         return True
+    if next_action.action == "request_observation" and _recent_observation_requests(task_state) >= 2:
+        return True
     if next_action.action == "wait_for":
         return True
     if next_action.action == "scroll" and _recent_scrolls(task_state) >= 2:
@@ -502,6 +540,18 @@ def _should_use_llm(task_state: V2TaskState, next_action: Optional[AgentAction])
 
 def _recent_scrolls(task_state: V2TaskState) -> int:
     return sum(1 for item in task_state.history[-5:] if item.get("type") == "action_result" and item.get("action", {}).get("action") == "scroll")
+
+
+def _recent_observation_requests(task_state: V2TaskState) -> int:
+    recent_history = task_state.history[-8:]
+    return sum(
+        1
+        for item in recent_history
+        if (
+            (item.get("type") == "action_result" and item.get("action", {}).get("action") == "request_observation")
+            or item.get("type") == "observation_refresh"
+        )
+    )
 
 
 def _estimate_tokens(value) -> int:
@@ -541,18 +591,18 @@ def _is_expected_open_app_transition(task_state: V2TaskState, foreground_app: Op
     return foreground_app != target_package
 
 
-def _is_checkout_confirmation(task_state: V2TaskState, message: str) -> bool:
+def _is_action_confirmation(task_state: V2TaskState, message: str) -> bool:
     if task_state.status != "awaiting_user":
         return False
     if not task_state.pending_action or task_state.pending_action.action != "ask_user":
         return False
-    if task_state.pending_action.reason_code != "safety_checkout_boundary":
+    if task_state.pending_action.reason_code not in {"safety_checkout_boundary", "safety_irreversible_action"}:
         return False
     lowered = (message or "").strip().lower()
     return lowered in {"yes", "y", "confirm", "continue", "proceed", "go ahead", "ok", "okay"}
 
 
-def _resume_checkout_after_confirmation(task_state: V2TaskState, req: V2ChatRequest) -> V2ChatResponse:
+def _resume_action_after_confirmation(task_state: V2TaskState, req: V2ChatRequest) -> V2ChatResponse:
     confirm_action = (task_state.pending_action.metadata or {}).get("confirm_action") if task_state.pending_action else None
     if not isinstance(confirm_action, dict):
         task_state.reply = "Checkout confirmation noted, but I could not find the target button. Please send a fresh screen."
@@ -560,7 +610,7 @@ def _resume_checkout_after_confirmation(task_state: V2TaskState, req: V2ChatRequ
         return V2ChatResponse(mode=task_state.mode, reply=task_state.reply, task_state=task_state)
 
     action_name = str(confirm_action.get("action", "tap_element"))
-    if action_name not in {"tap_element", "type_text", "scroll", "wait_for", "press_back", "press_home", "open_app"}:
+    if action_name not in {"tap_element", "type_text", "scroll", "request_observation", "wait_for", "press_back", "press_home", "open_app"}:
         action_name = "tap_element"
     next_action = AgentAction(
         id=f"act_{uuid4().hex[:8]}",
@@ -581,7 +631,7 @@ def _resume_checkout_after_confirmation(task_state: V2TaskState, req: V2ChatRequ
             "at": task_state.updated_at,
             "type": "user_confirmation",
             "message": req.message,
-            "reason": "safety_checkout_boundary",
+            "reason": task_state.pending_action.reason_code if task_state.pending_action else "safety_confirmation",
         }
     )
     task_state.history = task_state.history[-50:]

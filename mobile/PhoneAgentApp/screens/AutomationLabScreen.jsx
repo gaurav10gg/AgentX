@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
+  cancelV2Task,
   getV2Apps,
   getV2Tasks,
   sendV2ActionResult,
@@ -126,6 +127,22 @@ export default function AutomationLabScreen({ navigation }) {
     }
   };
 
+  const stopAutomation = async () => {
+    if (busy) {
+      return;
+    }
+    setBusy(true);
+    try {
+      const response = await cancelV2Task('user_requested_stop');
+      setTaskState(response?.task_state || null);
+      appendLog('warn', 'Automation stopped by user.');
+    } catch (error) {
+      appendLog('error', error.message || 'Failed to stop automation.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const continueAutomation = async (response, stepsRemaining) => {
     let current = response;
     let remaining = stepsRemaining;
@@ -139,7 +156,14 @@ export default function AutomationLabScreen({ navigation }) {
         break;
       }
 
-      current = await executeStep(action);
+      try {
+        current = await executeStep(action);
+      } catch (error) {
+        const message = error?.message || `Action ${action.action} failed unexpectedly.`;
+        appendLog('error', message);
+        appendLog('warn', 'Automation loop stopped after step failure. You can retry from current screen.');
+        break;
+      }
       remaining -= 1;
     }
 
@@ -158,6 +182,15 @@ export default function AutomationLabScreen({ navigation }) {
       setTaskState(response.task_state || null);
       setNormalizedScreen(response.normalized_screen || null);
       appendLog('assistant', response.reply || 'Observation processed.');
+      return response;
+    }
+
+    if (action.action === 'request_observation') {
+      const payload = await buildObservationPayload();
+      const response = await sendV2Observation(payload);
+      setTaskState(response.task_state || null);
+      setNormalizedScreen(response.normalized_screen || null);
+      appendLog('observe', response.reply || 'Fresh observation sent.');
       return response;
     }
 
@@ -307,6 +340,15 @@ export default function AutomationLabScreen({ navigation }) {
           <Text style={styles.stateLine}>Status: {taskState?.status || 'idle'}</Text>
           <Text style={styles.stateLine}>Current package: {taskState?.current_package || 'n/a'}</Text>
           <Text style={styles.stateLine}>Pending action: {taskState?.pending_action?.action || 'none'}</Text>
+          <View style={styles.row}>
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              onPress={stopAutomation}
+              disabled={busy || !taskState || !['active', 'awaiting_user'].includes(taskState?.status)}
+            >
+              <Text style={styles.secondaryBtnText}>Stop Automation</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.replyBox}>{taskState?.reply || 'No active V2 task yet.'}</Text>
         </View>
 

@@ -146,3 +146,12 @@ export const getV2Tasks = async () => {
   const response = await client.get(`/v2/tasks/${sessionId}`);
   return response.data;
 };
+
+export const cancelV2Task = async (reason = 'user_cancelled') => {
+  const client = await getClient();
+  const sessionId = await getOrCreateSessionId();
+  const response = await client.post(`/v2/tasks/${sessionId}/cancel`, null, {
+    params: { reason },
+  });
+  return response.data;
+};

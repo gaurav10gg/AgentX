@@ -79,6 +79,21 @@ def decide_next_action(
 
     if filtered:
         best = filtered[0]
+        best_label = str(best.get("label") or "").lower()
+        if any(token in best_label for token in ("add", "cart", "buy now", "place order", "pay")):
+            return AgentAction(
+                id="confirm_irreversible_action",
+                action="ask_user",
+                reason_code="safety_irreversible_action",
+                metadata={
+                    "message": f"Confirm before continuing: '{best.get('label', 'selected option')}'.",
+                    "confirm_action": {
+                        "action": "tap_element",
+                        "element_id": str(best["element_id"]),
+                        "reason_code": "user_confirm_irreversible_action",
+                    },
+                },
+            ), "Waiting for explicit confirmation before irreversible action."
         return AgentAction(
             id="tap_best_candidate",
             action="tap_element",
@@ -123,11 +138,11 @@ def decide_next_action(
             ), None
 
     return AgentAction(
-        id="wait_for_screen",
-        action="wait_for",
-        timeout_ms=1500,
-        reason_code="waiting_for_ui_stability",
-    ), None
+        id="request_fresh_observation",
+        action="request_observation",
+        reason_code="need_fresh_snapshot",
+        metadata={"message": "Need a fresh device snapshot to continue on this screen."},
+    ), "Requested a fresh screen snapshot before escalating."
 
 
 def _parse_action_key(action_key: str) -> Optional[AgentAction]:

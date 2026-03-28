@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 from tools.android.apps import swiggy as swiggy_adapter
 
 from .schemas import DeviceObservation, NormalizedElement, NormalizedScreen, RawUiNode
-from .screen_signature import compute_screen_signature
+from .screen_signature import compute_screen_signature, compute_structural_signature
 
 
 PRICE_PATTERN = re.compile(r"(?:₹|rs\.?|inr)\s*(\d+(?:\.\d+)?)", re.IGNORECASE)
@@ -54,6 +54,7 @@ def normalize_observation(observation: DeviceObservation) -> NormalizedScreen:
     if swiggy_adapter.is_swiggy_package(provisional.app_package):
         provisional = _enrich_swiggy_screen(provisional)
     provisional.screen_signature = compute_screen_signature(provisional)
+    provisional.structural_signature = compute_structural_signature(provisional)
     provisional.screen_id = f"{provisional.app_package or 'screen'}::{provisional.screen_signature}"
     return provisional
 

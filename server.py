@@ -6,6 +6,11 @@ from typing import Optional
 import uvicorn
 import traceback
 import re
+from pathlib import Path
+from datetime import datetime
+import json
+import time
+import threading
 
 from agent.agent import run_agent
 from agent.scheduler import scheduler
@@ -33,6 +38,18 @@ async def add_ngrok_header(request: Request, call_next):
 app.include_router(auth_router)
 app.include_router(v2_router)
 
+MAX_ACTIVE_NOTIFICATIONS = 1000
+MAX_SURFACED_PER_SESSION = 50
+MAX_ARCHIVE_NOTIFICATIONS = 10000
+CHAT_RATE_WINDOW_SECONDS = 60
+CHAT_RATE_MAX_PER_IP = 30
+CHAT_RATE_MAX_PER_SESSION = 20
+_CHAT_RATE_LOCK = threading.Lock()
+_CHAT_RATE_EVENTS = {
+    "ip": {},
+    "session": {},
+}
+
 
 # ── Scheduler lifecycle ──────────────────────────────────────────────────────
 
@@ -57,17 +74,11 @@ async def _on_task_complete(session_id: str, task_id: str, description: str, res
     Phase 2 (later): Replace with FCM push notification or WebSocket push.
     """
     from agent.task_store import TASK_DIR
-    import json
-    from pathlib import Path
-    from datetime import datetime
 
     notifications_file = TASK_DIR / "notifications.json"
+    archive_file = TASK_DIR / "notifications_archive.json"
     try:
-        if notifications_file.exists():
-            with open(notifications_file) as f:
-                notifs = json.load(f)
-        else:
-            notifs = []
+        notifs = _read_json_list(notifications_file)
 
         notifs.append({
             "session_id":  session_id,
@@ -78,8 +89,10 @@ async def _on_task_complete(session_id: str, task_id: str, description: str, res
             "surfaced":    False,
         })
 
-        with open(notifications_file, "w") as f:
-            json.dump(notifs, f, indent=2)
+        compacted, archived = _compact_notifications(notifs)
+        _write_json_list(notifications_file, compacted)
+        if archived:
+            _append_archive(archive_file, archived)
     except Exception as e:
         import logging
         logging.getLogger("scheduler").error("Failed to store notification: %s", e)
@@ -120,11 +133,12 @@ async def health(user_id: str = Query("default_user")):
 
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, request: Request):
     if not req.message.strip():
         raise HTTPException(400, "Message cannot be empty")
     if not req.api_key.strip():
         raise HTTPException(401, "API key is required")
+    _enforce_chat_rate_limit(request=request, session_id=req.session_id)
 
     google_token = refresh_token_if_needed(req.user_id)
 
@@ -210,15 +224,14 @@ def _pop_notifications(session_id: str) -> list:
     Returns list of notification dicts.
     """
     from agent.task_store import TASK_DIR
-    import json
 
     notifications_file = TASK_DIR / "notifications.json"
+    archive_file = TASK_DIR / "notifications_archive.json"
     if not notifications_file.exists():
         return []
 
     try:
-        with open(notifications_file) as f:
-            all_notifs = json.load(f)
+        all_notifs = _read_json_list(notifications_file)
 
         mine = [n for n in all_notifs if n["session_id"] == session_id and not n["surfaced"]]
 
@@ -227,8 +240,10 @@ def _pop_notifications(session_id: str) -> list:
             if n["session_id"] == session_id and not n["surfaced"]:
                 n["surfaced"] = True
 
-        with open(notifications_file, "w") as f:
-            json.dump(all_notifs, f, indent=2)
+        compacted, archived = _compact_notifications(all_notifs)
+        _write_json_list(notifications_file, compacted)
+        if archived:
+            _append_archive(archive_file, archived)
 
         return mine
     except Exception:
@@ -237,11 +252,10 @@ def _pop_notifications(session_id: str) -> list:
 
 def _backfill_notifications_from_tasks(session_id: str):
     from agent.task_store import TASK_DIR
-    import json
-    from datetime import datetime
 
     task_file = TASK_DIR / "pending_tasks.json"
     notifications_file = TASK_DIR / "notifications.json"
+    archive_file = TASK_DIR / "notifications_archive.json"
 
     if not task_file.exists():
         return
@@ -252,14 +266,7 @@ def _backfill_notifications_from_tasks(session_id: str):
     except Exception:
         return
 
-    try:
-        if notifications_file.exists():
-            with open(notifications_file) as f:
-                notifs = json.load(f)
-        else:
-            notifs = []
-    except Exception:
-        notifs = []
+    notifs = _read_json_list(notifications_file)
 
     existing_task_ids = {n.get("task_id") for n in notifs}
     changed = False
@@ -283,9 +290,79 @@ def _backfill_notifications_from_tasks(session_id: str):
         })
         changed = True
 
-    if changed:
-        with open(notifications_file, "w") as f:
-            json.dump(notifs, f, indent=2)
+    compacted, archived = _compact_notifications(notifs)
+    if changed or len(compacted) != len(notifs):
+        _write_json_list(notifications_file, compacted)
+        if archived:
+            _append_archive(archive_file, archived)
+
+
+def _read_json_list(path: Path) -> list:
+    if not path.exists():
+        return []
+    try:
+        with open(path) as f:
+            value = json.load(f)
+        return value if isinstance(value, list) else []
+    except Exception:
+        return []
+
+
+def _write_json_list(path: Path, rows: list):
+    with open(path, "w") as f:
+        json.dump(rows, f, indent=2)
+
+
+def _append_archive(path: Path, new_rows: list):
+    if not new_rows:
+        return
+    existing = _read_json_list(path)
+    merged = existing + [row for row in new_rows if isinstance(row, dict)]
+
+    def _ts(item: dict) -> str:
+        return str(item.get("at") or "")
+
+    merged.sort(key=_ts, reverse=True)
+    _write_json_list(path, merged[:MAX_ARCHIVE_NOTIFICATIONS])
+
+
+def _compact_notifications(notifs: list) -> tuple[list, list]:
+    """
+    Keep notifications bounded to prevent file growth/slow backfill scans.
+    - Keep all unsurfaced items.
+    - Keep only recent surfaced items per session.
+    - Enforce global MAX_ACTIVE_NOTIFICATIONS cap.
+    Returns: (compacted, archived)
+    """
+    sanitized = [n for n in notifs if isinstance(n, dict) and n.get("session_id") and n.get("task_id")]
+    if not sanitized:
+        return [], []
+
+    def _ts(item: dict) -> str:
+        return str(item.get("at") or "")
+
+    unsurfaced = [n for n in sanitized if not bool(n.get("surfaced"))]
+    surfaced = [n for n in sanitized if bool(n.get("surfaced"))]
+
+    per_session_keep: list[dict] = []
+    surfaced_by_session: dict[str, list[dict]] = {}
+    for item in surfaced:
+        sid = str(item.get("session_id"))
+        surfaced_by_session.setdefault(sid, []).append(item)
+    for session_items in surfaced_by_session.values():
+        session_items.sort(key=_ts, reverse=True)
+        per_session_keep.extend(session_items[:MAX_SURFACED_PER_SESSION])
+
+    kept = unsurfaced + per_session_keep
+    kept.sort(key=_ts, reverse=True)
+
+    if len(kept) <= MAX_ACTIVE_NOTIFICATIONS:
+        archived_candidates = [n for n in sanitized if n not in kept]
+        return kept, archived_candidates
+
+    trimmed = kept[:MAX_ACTIVE_NOTIFICATIONS]
+    archived_candidates = [n for n in sanitized if n not in trimmed]
+    return trimmed, archived_candidates
 
 
 def _format_notifications_summary(notifications: list) -> str:
@@ -293,6 +370,26 @@ def _format_notifications_summary(notifications: list) -> str:
     for n in notifications:
         lines.append(f"- {n['description']}: {n['result']}")
     return "\n".join(lines)
+
+
+def _enforce_chat_rate_limit(request: Request, session_id: str):
+    client_ip = (request.client.host if request.client else None) or "unknown"
+    now = time.monotonic()
+
+    with _CHAT_RATE_LOCK:
+        ip_events = _CHAT_RATE_EVENTS["ip"].setdefault(client_ip, [])
+        session_events = _CHAT_RATE_EVENTS["session"].setdefault(session_id, [])
+
+        ip_events[:] = [t for t in ip_events if now - t <= CHAT_RATE_WINDOW_SECONDS]
+        session_events[:] = [t for t in session_events if now - t <= CHAT_RATE_WINDOW_SECONDS]
+
+        if len(ip_events) >= CHAT_RATE_MAX_PER_IP:
+            raise HTTPException(429, f"Rate limit exceeded for this IP. Try again in a few seconds.")
+        if len(session_events) >= CHAT_RATE_MAX_PER_SESSION:
+            raise HTTPException(429, f"Rate limit exceeded for this session. Slow down and retry.")
+
+        ip_events.append(now)
+        session_events.append(now)
 
 
 def _sanitize_payload_text(value):

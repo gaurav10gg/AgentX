@@ -90,6 +90,7 @@ class NormalizedScreen(BaseModel):
     screen_id: str
     app_package: Optional[str] = None
     screen_signature: str
+    structural_signature: str = ""
     title: Optional[str] = None
     html: str
     elements: List[NormalizedElement] = Field(default_factory=list)
@@ -107,6 +108,7 @@ class AgentAction(BaseModel):
         "scroll",
         "press_back",
         "press_home",
+        "request_observation",
         "wait_for",
         "complete",
         "ask_user",

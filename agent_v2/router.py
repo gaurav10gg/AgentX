@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 
 from .app_registry import list_apps
-from .orchestrator import get_tasks, handle_action_result, handle_chat, handle_observation
+from .orchestrator import cancel_task, get_tasks, handle_action_result, handle_chat, handle_observation
 from .schemas import ActionResultRequest, DeviceObservation, ObserveResponse, V2ChatRequest, V2ChatResponse
 
 
@@ -61,3 +61,11 @@ async def v2_list_apps():
 @router.get("/tasks/{session_id}")
 async def v2_list_tasks(session_id: str):
     return {"tasks": [task.model_dump(mode="json") for task in get_tasks(session_id)]}
+
+
+@router.post("/tasks/{session_id}/cancel")
+async def v2_cancel_task(session_id: str, reason: str = Query("user_cancelled")):
+    task_state = cancel_task(session_id=session_id, reason=reason)
+    if not task_state:
+        raise HTTPException(404, "No V2 task found for session.")
+    return {"status": "cancelled", "task_state": task_state.model_dump(mode="json")}

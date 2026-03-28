@@ -228,6 +228,12 @@ phone-agent/
 
 ## Quick Start
 
+> [!IMPORTANT]
+> For V2 Android automation development, native code changes require a full rebuild.
+> If you modify files under `mobile/PhoneAgentApp/android/`, run:
+> `npx expo run:android --device`
+> instead of only `npx expo start`.
+
 ### 1. Backend setup
 
 ```bash
@@ -428,6 +434,7 @@ Returns current V2 task state for a session.
 - Keep `.tokens/` private
 - Keep `.data/token.key` private
 - Do not expose this backend publicly without auth, rate limits, and access control
+- `/chat` now includes basic in-memory rate limiting to reduce accidental provider-cost spikes
 - V2 automation should stop before irreversible final actions unless explicitly confirmed
 
 ---

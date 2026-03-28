@@ -2,6 +2,17 @@
 
 Expo-based Android client for PhoneX.
 
+## Important: Native Automation Changes Require Rebuild
+
+If you change anything under `android/` (Accessibility service, bridge module, action executor, manifest, or native permissions), **`expo start` is not enough**.
+You must rebuild and reinstall the app:
+
+```bash
+npx expo run:android --device
+```
+
+Use this as the default workflow for V2 automation contributors.
+
 ## What lives here
 
 - `App.js` bootstraps navigation
