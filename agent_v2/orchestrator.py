@@ -55,6 +55,13 @@ async def handle_chat(req: V2ChatRequest) -> V2ChatResponse:
     )
     previous_message = task_state.message
     task_state.message = req.message
+    if req.accessibility_enabled is False:
+        _pause_for_accessibility(task_state, "Enable Android Accessibility service to continue V2 automation.")
+        _persist_state(task_state)
+        return V2ChatResponse(mode=task_state.mode, reply=task_state.reply, task_state=task_state, requires_device_action=False)
+
+    task_state.safety_reason_code = None
+    task_state.safety_message = None
     task_state.classifier_calls = 0 if previous_message != req.message else task_state.classifier_calls
     if should_use_llm_classifier(intent):
         intent = await refine_intent_with_llm(intent, req.message, req.provider, req.api_key, req.model, req.base_url)
@@ -148,6 +155,7 @@ async def handle_observation(
         updated_at=datetime.utcnow().isoformat(),
     )
     original_fingerprint = _state_persistence_fingerprint(task_state)
+    accessibility_enabled = _extract_accessibility_enabled_from_observation(observation)
 
     normalized = normalize_observation(observation)
     save_snapshot(normalized.screen_id, normalized.model_dump())
@@ -189,6 +197,20 @@ async def handle_observation(
         }
     )
     task_state.history = task_state.history[-50:]
+
+    if accessibility_enabled is False:
+        _pause_for_accessibility(task_state, "Accessibility is off. Enable it, then send a fresh observation.")
+        _persist_state_if_changed(task_state, original_fingerprint)
+        return ObserveResponse(
+            reply=task_state.reply,
+            task_state=task_state,
+            normalized_screen=normalized,
+            next_action=None,
+            requires_device_action=False,
+        )
+
+    task_state.safety_reason_code = None
+    task_state.safety_message = None
 
     if executed_action and executed_action.action == "request_observation":
         task_state.history.append(
@@ -293,6 +315,14 @@ async def handle_action_result(
             created_at=datetime.utcnow().isoformat(),
             updated_at=datetime.utcnow().isoformat(),
         )
+    accessibility_enabled = _extract_accessibility_enabled_from_action_result(req)
+    if accessibility_enabled is False:
+        _pause_for_accessibility(task_state, "Accessibility is off. Enable it to resume automation.")
+        _persist_state(task_state)
+        return ObserveResponse(reply=task_state.reply, task_state=task_state, requires_device_action=False)
+
+    task_state.safety_reason_code = None
+    task_state.safety_message = None
 
     task_state.history.append(
         {

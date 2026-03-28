@@ -65,6 +65,8 @@ class DeviceObservation(BaseModel):
     foreground_app: Optional[str] = None
     screen_title: Optional[str] = None
     timestamp: Optional[str] = None
+    accessibility_enabled: Optional[bool] = None
+    accessibility_connected: Optional[bool] = None
     ui_tree: Optional[RawUiNode] = None
     ui_tree_list: List[RawUiNode] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -143,6 +145,8 @@ class V2TaskState(BaseModel):
     stagnant_scrolls: int = 0
     recovery_attempts: int = 0
     last_error: Optional[str] = None
+    safety_reason_code: Optional[str] = None
+    safety_message: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
@@ -156,6 +160,8 @@ class V2ChatRequest(BaseModel):
     model: Optional[str] = None
     base_url: Optional[str] = None
     device_id: str = "default_device"
+    accessibility_enabled: Optional[bool] = None
+    accessibility_connected: Optional[bool] = None
 
 
 class V2ChatResponse(BaseModel):
@@ -182,6 +188,8 @@ class ActionResultRequest(BaseModel):
     action: AgentAction
     success: bool = True
     result: Optional[str] = None
+    accessibility_enabled: Optional[bool] = None
+    accessibility_connected: Optional[bool] = None
     observation: Optional[DeviceObservation] = None
 
 
