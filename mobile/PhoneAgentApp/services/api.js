@@ -11,16 +11,20 @@ const getClient = async (backendUrlOverride) => {
   });
 };
 
-export const sendMessage = async (message) => {
+export const sendMessage = async (message, options = {}) => {
   const client = await getClient();
   const { provider, apiKey, model, baseUrl } = await getProviderSettings();
   const sessionId = await getOrCreateSessionId();
   const userId = await getOrCreateUserId();
+  const deviceId = await getOrCreateDeviceId();
 
   const response = await client.post('/chat', {
     message,
     session_id: sessionId,
     user_id: userId,
+    device_id: options.deviceId || deviceId,
+    accessibility_enabled: options.accessibilityEnabled ?? undefined,
+    accessibility_connected: options.accessibilityConnected ?? undefined,
     provider,
     api_key:  apiKey,
     model:    model    || undefined,
@@ -73,7 +77,7 @@ export const logoutGoogle = async (backendUrlOverride) => {
   return res.data;
 };
 
-export const sendV2Message = async (message) => {
+export const sendV2Message = async (message, options = {}) => {
   const client = await getClient();
   const { provider, apiKey, model, baseUrl } = await getProviderSettings();
   const sessionId = await getOrCreateSessionId();
@@ -85,6 +89,8 @@ export const sendV2Message = async (message) => {
     session_id: sessionId,
     user_id: userId,
     device_id: deviceId,
+    accessibility_enabled: options.accessibilityEnabled ?? undefined,
+    accessibility_connected: options.accessibilityConnected ?? undefined,
     provider,
     api_key: apiKey,
     model: model || undefined,
@@ -119,6 +125,8 @@ export const sendV2ActionResult = async ({ action, success = true, result = null
     session_id: sessionId,
     user_id: userId,
     device_id: deviceId,
+    accessibility_enabled: observation?.accessibility_enabled ?? undefined,
+    accessibility_connected: observation?.accessibility_connected ?? undefined,
     action,
     success,
     result,

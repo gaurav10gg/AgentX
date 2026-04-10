@@ -402,6 +402,21 @@ Returns current V2 task state for a session.
 - Background push for task completion is not built yet
 - There is still room to improve line-ending cleanup and cross-platform dev ergonomics
 
+## Known Blocker: Accessibility Disabled
+
+Symptoms:
+- V2 appears active but keeps operating on the wrong screen.
+- Observations show app UI unrelated to requested target flow.
+
+Diagnosis:
+- Android Accessibility service is OFF or disconnected.
+
+Fix:
+1. Open `Automation Lab`.
+2. Tap `Open Accessibility Settings`.
+3. Enable the AgentX accessibility service.
+4. Return and tap `Check Status` until `enabled: Yes`.
+
 ---
 
 ## Roadmap

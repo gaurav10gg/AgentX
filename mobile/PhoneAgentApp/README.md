@@ -13,6 +13,16 @@ npx expo run:android --device
 
 Use this as the default workflow for V2 automation contributors.
 
+## Known Blocker: Accessibility OFF
+
+If V2 is looping on the wrong screen or cannot progress:
+
+1. Open `Automation Lab`
+2. Tap `Open Accessibility Settings`
+3. Enable AgentX accessibility service
+4. Return to app and tap `Check Status`
+5. Only run V2 tasks when `Accessibility enabled: Yes`
+
 ## What lives here
 
 - `App.js` bootstraps navigation

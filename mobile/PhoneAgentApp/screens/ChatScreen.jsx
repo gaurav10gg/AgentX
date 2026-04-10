@@ -15,8 +15,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MessageBubble from '../components/MessageBubble';
 import ChatInput from '../components/ChatInput';
 import { clearHistory, sendMessage } from '../services/api';
+import { requestAccessibilityStatus } from '../services/automationBridge';
 import { isConfigured, loadChatHistory, resetSession, saveChatHistory } from '../services/storage';
 import { setAlarm, setupNotificationChannel } from '../services/alarm';
+import { runV2AutomationLoop } from '../services/v2AutomationRuntime';
 
 const ORANGE = '#FF6B35';
 
@@ -84,6 +86,19 @@ export default function ChatScreen({ navigation }) {
     });
   };
 
+  const appendAutomationProgress = (message, type = 'assistant') => {
+    const progressMessage = createMessage({
+      role: 'assistant',
+      type,
+      content: message,
+    });
+    setMessages((current) => {
+      const next = [...current, progressMessage];
+      saveChatHistory(next);
+      return next;
+    });
+  };
+
   const handleSend = async (text) => {
     if (loading) return;
 
@@ -97,7 +112,17 @@ export default function ChatScreen({ navigation }) {
     setLoading(true);
 
     try {
-      const response = await sendMessage(text);
+      let accessibility = null;
+      try {
+        accessibility = await requestAccessibilityStatus();
+      } catch {
+        accessibility = null;
+      }
+
+      const response = await sendMessage(text, {
+        accessibilityEnabled: accessibility?.enabled,
+        accessibilityConnected: accessibility?.connected,
+      });
 
       if (response.alarm_data) {
         await handleAlarm(response.alarm_data);
@@ -116,6 +141,52 @@ export default function ChatScreen({ navigation }) {
         : [...snapshot, assistantMessage];
 
       await persistAndSetMessages(finalMessages);
+
+      if (response.mode === 'ui_automation') {
+        let lastProgress = '';
+        const finalLoopState = await runV2AutomationLoop({
+          initialResponse: response,
+          maxSteps: 8,
+          ensureReady: async (sourceLabel) => {
+            try {
+              const status = await requestAccessibilityStatus();
+              if (!status?.enabled) {
+                const warning = 'Accessibility is off. Enable it to continue automation.';
+                if (warning !== lastProgress) {
+                  appendAutomationProgress(warning, 'error');
+                  lastProgress = warning;
+                }
+                return null;
+              }
+              return status;
+            } catch {
+              const warning = `Cannot verify accessibility during ${sourceLabel}.`;
+              if (warning !== lastProgress) {
+                appendAutomationProgress(warning, 'error');
+                lastProgress = warning;
+              }
+              return null;
+            }
+          },
+          onProgress: ({ level, message }) => {
+            const compact =
+              level === 'plan'
+                ? `Automation: ${message}`
+                : level === 'warn'
+                  ? `Automation paused: ${message}`
+                  : level === 'error'
+                    ? `Automation issue: ${message}`
+                    : `Automation: ${message}`;
+            if (compact === lastProgress) return;
+            lastProgress = compact;
+            appendAutomationProgress(compact, level === 'error' ? 'error' : 'assistant');
+          },
+        });
+
+        if (finalLoopState?.reply && finalLoopState.reply !== response.reply) {
+          appendAutomationProgress(finalLoopState.reply, 'assistant');
+        }
+      }
     } catch (error) {
       const errorMessage = createMessage({
         role: 'assistant',

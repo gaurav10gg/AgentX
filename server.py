@@ -15,6 +15,10 @@ import threading
 from agent.agent import run_agent
 from agent.scheduler import scheduler
 from agent_v2.router import router as v2_router
+from agent_v2.intent import classify_intent
+from agent_v2.orchestrator import get_tasks as get_v2_tasks
+from agent_v2.orchestrator import handle_chat as run_v2_chat
+from agent_v2.schemas import IntentKind, V2ChatRequest
 from auth.google_oauth import router as auth_router
 from auth.token_store import refresh_token_if_needed
 from config.settings import settings, PROVIDER_PRESETS
@@ -108,6 +112,9 @@ class ChatRequest(BaseModel):
     model: Optional[str] = None
     base_url: Optional[str] = None
     user_id: str = "default_user"
+    device_id: Optional[str] = None
+    accessibility_enabled: Optional[bool] = None
+    accessibility_connected: Optional[bool] = None
 
 class ChatResponse(BaseModel):
     reply: str
@@ -117,6 +124,10 @@ class ChatResponse(BaseModel):
     iterations: int = 0
     # Completed task notifications delivered alongside this reply
     task_notifications: list = Field(default_factory=list)
+    mode: str = "v1"
+    task_state: Optional[dict] = None
+    requires_device_action: bool = False
+    next_action: Optional[dict] = None
 
 
 # ── Routes ───────────────────────────────────────────────────────────────────
@@ -166,18 +177,58 @@ async def chat(req: ChatRequest, request: Request):
         )
         effective_message = f"{notif_lines}\n\n{req.message}"
 
+    should_route_v2 = _should_route_to_v2_chat(req.session_id, req.message)
+
     try:
-        result = await run_agent(
-            user_message=effective_message,
-            session_id=req.session_id,
-            user_id=req.user_id,
-            provider=req.provider,
-            api_key=req.api_key,
-            model=req.model,
-            base_url=req.base_url,
-            google_token=google_token,
-        )
-        result = _sanitize_payload_text(result)
+        if should_route_v2:
+            v2_response = await run_v2_chat(
+                V2ChatRequest(
+                    message=req.message,
+                    session_id=req.session_id,
+                    user_id=req.user_id,
+                    provider=req.provider,
+                    api_key=req.api_key,
+                    model=req.model,
+                    base_url=req.base_url,
+                    device_id=req.device_id or "default_device",
+                    accessibility_enabled=req.accessibility_enabled,
+                    accessibility_connected=req.accessibility_connected,
+                )
+            )
+            v2_payload = {
+                "reply": v2_response.reply,
+                "actions_taken": [],
+                "alarm_data": None,
+                "requires_confirmation": False,
+                "iterations": 0,
+                "mode": v2_response.mode,
+                "task_state": (
+                    v2_response.task_state.model_dump(mode="json")
+                    if v2_response.task_state
+                    else None
+                ),
+                "requires_device_action": v2_response.requires_device_action,
+                "next_action": (
+                    v2_response.next_action.model_dump(mode="json")
+                    if v2_response.next_action
+                    else None
+                ),
+            }
+            result = _sanitize_payload_text(v2_payload)
+        else:
+            result = await run_agent(
+                user_message=effective_message,
+                session_id=req.session_id,
+                user_id=req.user_id,
+                provider=req.provider,
+                api_key=req.api_key,
+                model=req.model,
+                base_url=req.base_url,
+                google_token=google_token,
+            )
+            result["mode"] = "v1"
+            result = _sanitize_payload_text(result)
+
         notifications = _sanitize_payload_text(notifications)
 
         # Deterministic UX: always surface completed task notifications in reply text.
@@ -187,10 +238,7 @@ async def chat(req: ChatRequest, request: Request):
             reply = result.get("reply", "")
             result["reply"] = f"{summary}\n\n{reply}" if reply else summary
 
-        return ChatResponse(
-            **result,
-            task_notifications=notifications,
-        )
+        return ChatResponse(**result, task_notifications=notifications)
     except Exception as e:
         print("FULL ERROR:")
         traceback.print_exc()
@@ -370,6 +418,28 @@ def _format_notifications_summary(notifications: list) -> str:
     for n in notifications:
         lines.append(f"- {n['description']}: {n['result']}")
     return "\n".join(lines)
+
+
+def _should_route_to_v2_chat(session_id: str, message: str) -> bool:
+    if _is_v2_confirmation(session_id, message):
+        return True
+    intent = classify_intent(message)
+    return intent.kind == IntentKind.UI_AUTOMATION
+
+
+def _is_v2_confirmation(session_id: str, message: str) -> bool:
+    lowered = (message or "").strip().lower()
+    if lowered not in {"yes", "y", "confirm", "continue", "proceed", "go ahead", "ok", "okay"}:
+        return False
+    states = get_v2_tasks(session_id=session_id)
+    if not states:
+        return False
+    state = states[0]
+    if state.status != "awaiting_user":
+        return False
+    if not state.pending_action or state.pending_action.action != "ask_user":
+        return False
+    return state.pending_action.reason_code in {"safety_checkout_boundary", "safety_irreversible_action"}
 
 
 def _enforce_chat_rate_limit(request: Request, session_id: str):

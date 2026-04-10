@@ -16,7 +16,6 @@ import {
   cancelV2Task,
   getV2Apps,
   getV2Tasks,
-  sendV2ActionResult,
   sendV2Message,
   sendV2Observation,
 } from '../services/api';
@@ -24,10 +23,10 @@ import {
   getCurrentUiTree,
   openAccessibilitySettings,
   openApp,
-  performAction,
   requestAccessibilityStatus,
 } from '../services/automationBridge';
 import { buildObservationPayload } from '../services/deviceState';
+import { runV2AutomationLoop } from '../services/v2AutomationRuntime';
 
 const ORANGE = '#FF6B35';
 
@@ -36,8 +35,6 @@ const QUICK_TASKS = [
   'Search biryani on Swiggy',
   'Order biryani under 250 with rating above 4.5 using cash on delivery',
 ];
-
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const createLogEntry = (kind, message) => ({
   id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -66,6 +63,28 @@ export default function AutomationLabScreen({ navigation }) {
 
   const appendLog = (kind, message) => {
     setLogs((current) => [createLogEntry(kind, message), ...current].slice(0, 18));
+  };
+
+  const promptEnableAccessibility = () => {
+    Alert.alert(
+      'Accessibility Required',
+      'Accessibility is off. Enable it to continue V2 automation.',
+      [
+        { text: 'Not now', style: 'cancel' },
+        { text: 'Open Settings', onPress: handleOpenAccessibility },
+      ]
+    );
+  };
+
+  const ensureAccessibilityReady = async (sourceLabel = 'automation') => {
+    const nextStatus = await requestAccessibilityStatus();
+    setStatus(nextStatus);
+    if (!nextStatus?.enabled) {
+      appendLog('warn', `Accessibility is off. Enable it to continue ${sourceLabel}.`);
+      promptEnableAccessibility();
+      return null;
+    }
+    return nextStatus;
   };
 
   const bootstrap = async () => {
@@ -100,8 +119,15 @@ export default function AutomationLabScreen({ navigation }) {
 
     setBusy(true);
     try {
+      const accessibility = await ensureAccessibilityReady('V2 task');
+      if (!accessibility) {
+        return;
+      }
       appendLog('user', prompt.trim());
-      const response = await sendV2Message(prompt.trim());
+      const response = await sendV2Message(prompt.trim(), {
+        accessibilityEnabled: accessibility.enabled,
+        accessibilityConnected: accessibility.connected,
+      });
       setTaskState(response.task_state || null);
       appendLog('assistant', response.reply);
       await continueAutomation(response, 8);
@@ -115,6 +141,10 @@ export default function AutomationLabScreen({ navigation }) {
   const captureNow = async () => {
     setBusy(true);
     try {
+      const accessibility = await ensureAccessibilityReady('screen capture');
+      if (!accessibility) {
+        return;
+      }
       const payload = await buildObservationPayload();
       const response = await sendV2Observation(payload);
       setTaskState(response.task_state || null);
@@ -144,76 +174,18 @@ export default function AutomationLabScreen({ navigation }) {
   };
 
   const continueAutomation = async (response, stepsRemaining) => {
-    let current = response;
-    let remaining = stepsRemaining;
-
-    while (current?.next_action && remaining > 0) {
-      const action = current.next_action;
-      setTaskState(current.task_state || null);
-      appendLog('plan', `Next action: ${action.action}${action.element_id ? ` -> ${action.element_id}` : ''}`);
-
-      if (action.action === 'complete' || action.action === 'ask_user') {
-        break;
-      }
-
-      try {
-        current = await executeStep(action);
-      } catch (error) {
-        const message = error?.message || `Action ${action.action} failed unexpectedly.`;
-        appendLog('error', message);
-        appendLog('warn', 'Automation loop stopped after step failure. You can retry from current screen.');
-        break;
-      }
-      remaining -= 1;
+    const accessibility = await ensureAccessibilityReady('automation loop');
+    if (!accessibility) {
+      return;
     }
-
-    if (remaining === 0) {
-      appendLog('warn', 'Stopped after 8 steps to avoid runaway automation.');
-    }
-  };
-
-  const executeStep = async (action) => {
-    if (action.action === 'open_app') {
-      const success = await openApp(action.package_name || '');
-      appendLog(success ? 'action' : 'error', success ? `Opened ${action.package_name}` : `Failed to open ${action.package_name}`);
-      await sleep(1200);
-      const payload = await buildObservationPayload();
-      const response = await sendV2Observation(payload);
-      setTaskState(response.task_state || null);
-      setNormalizedScreen(response.normalized_screen || null);
-      appendLog('assistant', response.reply || 'Observation processed.');
-      return response;
-    }
-
-    if (action.action === 'request_observation') {
-      const payload = await buildObservationPayload();
-      const response = await sendV2Observation(payload);
-      setTaskState(response.task_state || null);
-      setNormalizedScreen(response.normalized_screen || null);
-      appendLog('observe', response.reply || 'Fresh observation sent.');
-      return response;
-    }
-
-    const params = {
-      elementId: action.element_id || null,
-      text: action.input_text || '',
-      direction: action.direction || 'down',
-      timeoutMs: action.timeout_ms || 1200,
-    };
-    const result = await performAction(action.action, params);
-    await sleep(action.action === 'wait_for' ? (action.timeout_ms || 1200) : 800);
-    const observation = await buildObservationPayload();
-    const response = await sendV2ActionResult({
-      action,
-      success: Boolean(result?.success),
-      result: result?.success ? `${action.action} executed on device.` : `${action.action} failed on device.`,
-      observation,
+    await runV2AutomationLoop({
+      initialResponse: response,
+      maxSteps: stepsRemaining,
+      ensureReady: async (source) => ensureAccessibilityReady(source),
+      onTaskState: (nextTaskState) => setTaskState(nextTaskState),
+      onNormalizedScreen: (screen) => setNormalizedScreen(screen),
+      onProgress: ({ level, message }) => appendLog(level, message),
     });
-    setTaskState(response.task_state || null);
-    setNormalizedScreen(response.normalized_screen || null);
-    appendLog(result?.success ? 'action' : 'error', result?.success ? `${action.action} executed.` : `${action.action} failed.`);
-    appendLog('assistant', response.reply || 'Backend processed action result.');
-    return response;
   };
 
   const handleOpenAccessibility = async () => {
@@ -279,6 +251,11 @@ export default function AutomationLabScreen({ navigation }) {
           <Text style={styles.statusLine}>Accessibility enabled: {status?.enabled ? 'Yes' : 'No'}</Text>
           <Text style={styles.statusLine}>Service connected: {status?.connected ? 'Yes' : 'No'}</Text>
           <Text style={styles.statusLine}>Foreground app: {status?.foregroundApp || 'Unknown'}</Text>
+          {!status?.enabled && (
+            <Text style={styles.warnText}>
+              Accessibility is required. Enable it before running V2 tasks.
+            </Text>
+          )}
           <View style={styles.row}>
             <TouchableOpacity style={styles.secondaryBtn} onPress={refreshStatus}>
               <Text style={styles.secondaryBtnText}>Check Status</Text>
@@ -309,7 +286,7 @@ export default function AutomationLabScreen({ navigation }) {
             ))}
           </View>
           <View style={styles.row}>
-            <TouchableOpacity style={styles.primaryBtn} onPress={runTask} disabled={busy}>
+            <TouchableOpacity style={styles.primaryBtn} onPress={runTask} disabled={busy || status?.enabled === false}>
               {busy ? <ActivityIndicator color="#000" /> : <Text style={styles.primaryBtnText}>Run Task</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={styles.secondaryBtn} onPress={captureNow} disabled={busy}>
@@ -426,6 +403,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: { color: '#fff', fontWeight: '800', fontSize: 16 },
   statusLine: { color: '#d6d3d1', fontSize: 13 },
+  warnText: { color: '#fca5a5', fontSize: 13, fontWeight: '700' },
   stateLine: { color: '#b6b6b6', fontSize: 13 },
   replyBox: {
     color: '#f4f4f5',

@@ -17,8 +17,11 @@ class Settings(BaseSettings):
     tool_timeout_seconds: int = 15
     conversation_memory_length: int = 20
     v2_max_llm_calls_per_task: int = 4
+    v2_max_llm_calls_per_task_hard_cap: int = 8
     v2_max_recovery_attempts: int = 2
     v2_llm_token_budget: int = 6000
+    v2_llm_same_screen_cooldown_events: int = 8
+    v2_llm_same_screen_max_calls: int = 1
     v2_memory_shortcut_threshold: float = 0.88
     v2_intent_confidence_accept_threshold: float = 0.88
     v2_classifier_temperature: float = 0.0

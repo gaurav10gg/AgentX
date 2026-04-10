@@ -415,10 +415,28 @@ async def _decide_from_screen(task_state: V2TaskState, req: V2ChatRequest) -> V2
     memory_note = f"Known flow confidence: {flow_hint['confidence']:.2f}" if flow_hint else None
     next_action, explanation = decide_next_action(task_state.intent, screen)
 
-    if task_state.intent.requires_llm and _should_use_llm(task_state, next_action):
+    llm_budget_exhausted = task_state.intent.requires_llm and _llm_budget_exhausted(task_state)
+    llm_should_run = task_state.intent.requires_llm and not llm_budget_exhausted and _should_use_llm(task_state, next_action)
+    if llm_should_run:
         llm_action = await _ask_llm_for_action(task_state, req)
         if llm_action is not None:
             next_action = llm_action
+        elif _llm_budget_exhausted(task_state):
+            fallback = _fallback_action_without_llm(task_state, next_action)
+            if fallback:
+                next_action = fallback
+                explanation = (
+                    "Planning budget reached, switching to deterministic recovery steps "
+                    "instead of blocking immediately."
+                )
+    elif llm_budget_exhausted:
+        fallback = _fallback_action_without_llm(task_state, next_action)
+        if fallback:
+            next_action = fallback
+            explanation = (
+                "Planning budget reached, switching to deterministic recovery steps "
+                "instead of blocking immediately."
+            )
 
     if next_action and next_action.action == "scroll" and task_state.stagnant_scrolls >= 3:
         next_action = AgentAction(
@@ -464,8 +482,12 @@ async def _decide_from_screen(task_state: V2TaskState, req: V2ChatRequest) -> V2
 async def _ask_llm_for_action(task_state: V2TaskState, req: V2ChatRequest) -> Optional[AgentAction]:
     if not req.api_key:
         return None
-    if task_state.llm_calls >= settings.v2_max_llm_calls_per_task:
-        task_state.reply = "LLM planning budget reached for this task. Need a more explicit screen or a simpler instruction."
+    llm_budget = _effective_llm_budget(task_state)
+    if task_state.llm_calls >= llm_budget:
+        task_state.reply = (
+            "LLM planning budget reached for this task. "
+            "Switching to deterministic recovery unless you send a clearer screen."
+        )
         return None
     if task_state.estimated_llm_tokens >= settings.v2_llm_token_budget:
         task_state.reply = "Token budget reached for this task. Please narrow the request or resend from the current screen."
@@ -499,7 +521,19 @@ async def _ask_llm_for_action(task_state: V2TaskState, req: V2ChatRequest) -> Op
         task_state.llm_calls += 1
         task_state.estimated_llm_tokens += estimated_tokens + _estimate_tokens(content)
         parsed = json.loads(content)
-        return AgentAction(**parsed)
+        action = AgentAction(**parsed)
+        task_state.history.append(
+            {
+                "at": datetime.utcnow().isoformat(),
+                "type": "llm_plan",
+                "screen_signature": screen.screen_signature if screen else None,
+                "action": action.model_dump(mode="json"),
+                "llm_calls": task_state.llm_calls,
+                "llm_budget": llm_budget,
+            }
+        )
+        task_state.history = task_state.history[-50:]
+        return action
     except Exception:
         return None
 
@@ -548,8 +582,18 @@ def _task_key(task_state: V2TaskState) -> str:
 
 
 def _should_use_llm(task_state: V2TaskState, next_action: Optional[AgentAction]) -> bool:
+    if _llm_budget_exhausted(task_state):
+        return False
     if next_action is None:
         return True
+    if (
+        task_state.latest_screen
+        and _recent_llm_calls_for_screen(task_state, task_state.latest_screen.screen_signature)
+        >= settings.v2_llm_same_screen_max_calls
+        and not task_state.last_error
+        and task_state.recovery_attempts == 0
+    ):
+        return False
     if task_state.last_error:
         return True
     if task_state.recovery_attempts > 0:
@@ -584,9 +628,110 @@ def _recent_observation_requests(task_state: V2TaskState) -> int:
     )
 
 
+def _effective_llm_budget(task_state: V2TaskState) -> int:
+    budget = settings.v2_max_llm_calls_per_task
+    intent = task_state.intent
+    if intent and intent.kind == IntentKind.UI_AUTOMATION:
+        budget += 1
+    if intent and intent.extracted_query:
+        budget += 1
+    if intent and intent.constraints and intent.constraints.hard:
+        budget += 1
+    if task_state.recovery_attempts > 0:
+        budget += 1
+    return min(budget, settings.v2_max_llm_calls_per_task_hard_cap)
+
+
+def _llm_budget_exhausted(task_state: V2TaskState) -> bool:
+    return task_state.llm_calls >= _effective_llm_budget(task_state)
+
+
+def _recent_llm_calls_for_screen(task_state: V2TaskState, screen_signature: Optional[str]) -> int:
+    if not screen_signature:
+        return 0
+    recent = task_state.history[-settings.v2_llm_same_screen_cooldown_events :]
+    return sum(
+        1
+        for item in recent
+        if item.get("type") == "llm_plan" and item.get("screen_signature") == screen_signature
+    )
+
+
+def _fallback_action_without_llm(task_state: V2TaskState, next_action: Optional[AgentAction]) -> Optional[AgentAction]:
+    if next_action is None:
+        return AgentAction(
+            id=f"act_{uuid4().hex[:8]}",
+            action="request_observation",
+            reason_code="budget_recovery_observation",
+            metadata={"message": "Send a fresh screen snapshot so I can continue without extra planning cost."},
+        )
+    if next_action.action in {"wait_for", "request_observation"}:
+        if _recent_observation_requests(task_state) >= 3:
+            return AgentAction(
+                id=f"act_{uuid4().hex[:8]}",
+                action="press_back",
+                reason_code="budget_recovery_navigation",
+            )
+        return AgentAction(
+            id=f"act_{uuid4().hex[:8]}",
+            action="request_observation",
+            reason_code="budget_recovery_observation",
+            metadata={"message": "Resyncing with a fresh snapshot before further actions."},
+        )
+    if next_action.action == "scroll" and task_state.stagnant_scrolls >= 2:
+        return AgentAction(
+            id=f"act_{uuid4().hex[:8]}",
+            action="press_back",
+            reason_code="budget_recovery_stagnant_scroll",
+        )
+    if next_action.action == "ask_user" and next_action.reason_code != "constraint_no_match":
+        return AgentAction(
+            id=f"act_{uuid4().hex[:8]}",
+            action="request_observation",
+            reason_code="budget_recovery_before_ask_user",
+            metadata={"message": "Collecting one more fresh screen before asking you to intervene."},
+        )
+    return next_action
+
+
 def _estimate_tokens(value) -> int:
     text = value if isinstance(value, str) else json.dumps(value)
     return max(1, len(text) // 4)
+
+
+def _pause_for_accessibility(task_state: V2TaskState, message: str):
+    task_state.status = "awaiting_user"
+    task_state.pending_action = None
+    task_state.reply = message
+    task_state.safety_reason_code = "accessibility_disabled"
+    task_state.safety_message = message
+    task_state.updated_at = datetime.utcnow().isoformat()
+    task_state.history.append(
+        {
+            "at": task_state.updated_at,
+            "type": "safety_pause",
+            "reason_code": "accessibility_disabled",
+            "message": message,
+        }
+    )
+    task_state.history = task_state.history[-50:]
+
+
+def _extract_accessibility_enabled_from_observation(observation: DeviceObservation) -> Optional[bool]:
+    if observation.accessibility_enabled is not None:
+        return bool(observation.accessibility_enabled)
+    value = observation.metadata.get("accessibility_enabled")
+    if value is None:
+        return None
+    return bool(value)
+
+
+def _extract_accessibility_enabled_from_action_result(req: ActionResultRequest) -> Optional[bool]:
+    if req.accessibility_enabled is not None:
+        return bool(req.accessibility_enabled)
+    if req.observation:
+        return _extract_accessibility_enabled_from_observation(req.observation)
+    return None
 
 
 def _state_persistence_fingerprint(task_state: V2TaskState) -> str:
@@ -605,6 +750,8 @@ def _state_persistence_fingerprint(task_state: V2TaskState) -> str:
         "recovery_attempts": task_state.recovery_attempts,
         "stagnant_scrolls": task_state.stagnant_scrolls,
         "last_error": task_state.last_error,
+        "safety_reason_code": task_state.safety_reason_code,
+        "safety_message": task_state.safety_message,
         "screen_signature": signature,
     }
     return json.dumps(fingerprint_payload, sort_keys=True)
@@ -634,6 +781,7 @@ def _is_action_confirmation(task_state: V2TaskState, message: str) -> bool:
 
 def _resume_action_after_confirmation(task_state: V2TaskState, req: V2ChatRequest) -> V2ChatResponse:
     confirm_action = (task_state.pending_action.metadata or {}).get("confirm_action") if task_state.pending_action else None
+    original_reason = task_state.pending_action.reason_code if task_state.pending_action else "safety_confirmation"
     if not isinstance(confirm_action, dict):
         task_state.reply = "Checkout confirmation noted, but I could not find the target button. Please send a fresh screen."
         _persist_state(task_state)
@@ -661,7 +809,7 @@ def _resume_action_after_confirmation(task_state: V2TaskState, req: V2ChatReques
             "at": task_state.updated_at,
             "type": "user_confirmation",
             "message": req.message,
-            "reason": task_state.pending_action.reason_code if task_state.pending_action else "safety_confirmation",
+            "reason": original_reason,
         }
     )
     task_state.history = task_state.history[-50:]
